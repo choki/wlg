@@ -1,0 +1,17 @@
+#!/bin/sh
+
+rm -rf cscope* tags
+find . \( -name '*.c' -o -name '*.cpp' -o -name '*.cc' -o -name '*.h' -o -name '*.s' -o -name '*.S' -o -name '*.xml' -o -name '*.java' -o -name '*.mk' -o -name 'Makefile' -o -name '*.rc' -o -name '*.dts' -o -name '*.dtsi' \) -print > cscope.files
+
+cscope -b -i cscope.files
+
+echo ======== cscope complete =======
+echo plz wait....until ctags complete
+
+ctags -R --c++-kinds=+p --fields=+iaS --extra=+q .
+echo ======== ctags  complete ========
+
+echo set tags="$PWD_PATH"/tags >> ~/.vimrc
+
+echo ========  sync complete  ========
+

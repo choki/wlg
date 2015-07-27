@@ -1,0 +1,3 @@
+a=0
+set datafile separator ","
+plot "trace.txt" using 1:(strcol(3) eq 'C'a=a-$5:a=a+$5) with histeps
