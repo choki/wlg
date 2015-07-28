@@ -16,6 +16,7 @@
 #include <time.h>	//time()
 #include <signal.h>
 #include <unistd.h>
+#include <sched.h>	//sched_affinity()
 #include "workload_generator.h"
 
 
@@ -151,6 +152,17 @@ void main(void)
     char *tmpChar;
     bool found;
 
+    /* CPU dedication for blktrace logging */ 
+    /*int errno;
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    CPU_SET(2, &mask);
+    if( errno = sched_setaffinity(0, sizeof(mask), &mask) != 0 ){
+	PRINT("Error on CPU affinity function, file:%s, line:%d, err:%d\n", \
+	       	__func__, __LINE__, errno);
+	exit(1);
+    }*/
+    
     tmpChar = malloc(sizeof(char) * WG_STR_LENGTH);
     line = malloc(sizeof(char) * WG_STR_LENGTH);
     buf = malloc(sizeof(char) * WG_STR_LENGTH);
@@ -159,7 +171,8 @@ void main(void)
 
     sprintf(buf, "%s%s", "./", "init_workload_generator");
     if( (filp = fopen(buf, "rw")) == NULL){
-	PRINT("Error on opening the init_file of workload generator, file:%s, line:%d\n", __func__, __LINE__);
+	PRINT("Error on opening the init_file of workload generator, file:%s, line:%d\n", \
+	       	__func__, __LINE__);
 	exit(1);
     }
 
@@ -219,13 +232,16 @@ void workload_generator(void)
 	start_time;
     unsigned long max_written_size = 0;
 
+    //TODO for test
+    int test_count=1;
+
     if(wg_env->rand_deterministic == 0){
 	srand(time(NULL));
     }
 
-    if( (fd = open(wg_env->file_path, O_CREAT|O_RDWR|O_DIRECT, 0666)) == -1){
-    //if( (fd = open(wg_env->file_path, O_CREAT|O_RDWR, 0666)) == -1){
-	PRINT("Error on opening the init_file of workload generator, file:%s, line:%d\n", __func__, __LINE__);
+    //if( (fd = open(wg_env->file_path, O_CREAT|O_RDWR|O_DIRECT, 0666)) == -1){
+    if( (fd = open(wg_env->file_path, O_CREAT|O_RDWR, 0666)) == -1){
+	PRINT("Error on opening the init_file of workload generator, file:%s, line:%d, fd=%d\n", __func__, __LINE__, fd);
 	exit(1);
     }
 
@@ -245,18 +261,24 @@ void workload_generator(void)
 	exit(1);
     }
     max_written_size = wg_env->max_addr;
+    //size = 2048;
     //end of TODO
 
-    //sleep(1);
+    //usleep(50);
     gettimeofday(&start_time, NULL);
 
     while (1) {
 	op = select_op(max_written_size);
 	start_addr = select_start_addr(prior_end_addr, op, max_written_size);
+	
+	//TODO
 	size = select_size(start_addr, op , max_written_size);
 
 	//TODO for test
-	size = 4096;
+	/*if(test_count%4 == 1){
+	    size *= 2;
+	}
+	test_count++;*/
 
 	if (WG_READ == op)
 	    PRINT("READ  ");
@@ -265,7 +287,7 @@ void workload_generator(void)
 
 	fill_data(buf, size);
 
-	PRINT("start_addr : %20lu, size %20lu\n", start_addr, size);
+	PRINT("\tstart_addr:%12lu \t size:%12lu\n", start_addr, size);
 	switch (op){
 	    case WG_READ:
 		lseek(fd, start_addr, SEEK_SET);
@@ -360,6 +382,9 @@ unsigned long select_start_addr(unsigned long prior_end_addr, int op, unsigned l
     //Sequential case
     if(selector < wg_env->sequential_w){
 	selector = prior_end_addr;
+	if(selector >= wg_env->max_addr){
+	    selector = wg_env->min_addr;
+	}
 	PRINT("S ");
     }
     //Random case
@@ -445,7 +470,7 @@ void f_file_path(char *in)
 {
     wg_env->file_path = malloc(sizeof(char) * WG_STR_LENGTH);
     strncpy(wg_env->file_path, in, (int)strlen(in)+1);
-    PRINT("test_length_type : %s\n", (char *)wg_env->file_path);
+    PRINT("file path : %s\n", (char *)wg_env->file_path);
 }
 void f_test_interface_type(unsigned long in)
 {

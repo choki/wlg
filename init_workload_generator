@@ -1,6 +1,9 @@
 # Testing file path
 # FILE_PATH /dev/sda1
-FILE_PATH /media/choki98/sandisk/a
+# WARNING : 
+# 	When a block device is set to file path, 
+# 	application should run with "ROOT" authority.
+FILE_PATH /dev/sda1
 
 # TEST_INTERFAE_TYPE : 
 # 	0 -> Character Device (Unit : byte) 
@@ -17,13 +20,13 @@ TEST_LENGTH_TYPE 1
 # TOTAL_TEST_REQUESTS : 
 # 	if TEST_LENGTH_TYPE is time, 
 # 	this value will be ignored
-TOTAL_TEST_REQUESTS 20
+TOTAL_TEST_REQUESTS 100
 
 # TOTAL_TEST_TIME : 
 # 	Unit of value is 'ms' & 
 # 		if TEST_LENGTH_TYPE is number of requests, 
 # 	this value will be ignored
-TOTAL_TEST_TIME 1000
+TOTAL_TEST_TIME 100000
 
 
 
@@ -32,7 +35,7 @@ MAX_ADDRESS 1000000000
 MIN_ADDRESS 0
 
 # Size of request
-MAX_SIZE 10000000
+MAX_SIZE 1000000
 MIN_SIZE 0
 
 # Each operation type is selected by each weight
@@ -43,8 +46,9 @@ WRITE_W 0
 SEQUENTIAL_W 0
 NONSEQUENTIAL_W 100
 
-# After requests as many as burstiness number are issued, request issuing is posed for pose time
-BURSTINESS_NUMBER 10
+# After requests as many as burstiness number are issued, 
+# 	request issuing is posed for pose time
+BURSTINESS_NUMBER 1000 
 # Unit of pose time is 'ms'
 POSE_TIME 0
 
