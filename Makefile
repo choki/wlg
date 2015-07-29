@@ -3,7 +3,7 @@
 all:
 	gcc $(CFLAGS) -o run workload_generator.c -lrt
 
-parser:
+parser: trace_parser.c
 	gcc -o parser trace_parser.c
 clean:
 	rm -rf run

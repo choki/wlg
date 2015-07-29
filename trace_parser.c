@@ -18,8 +18,8 @@ typedef struct _readLine{
 } readLine;
 
 typedef struct _summary{
-    double total;
-    int  		 count;
+    double 	total;
+    int  	count;
 } summary;
 
 summary sum[SECTOR_ARRAY_SIZE] = {0};
@@ -50,7 +50,7 @@ void main(void)
     tmp = malloc(sizeof(char)*MAX_STR_LEN);
 
     while( getline(&line1, &len, fpR1) != -1 ){
-	printf("%s", line1);
+	//printf("%s", line1);
 	//line1 changes during strtok.....;;;;
 	strncpy(tmp, line1, strlen(line1)+1);
 	
@@ -84,13 +84,14 @@ void main(void)
 	}
 	cnt1 = 0;
 
-	printf("string1  cpu:%d, sTime:%lf, rwbs:%s, action:%s, sSector:%ld, size:%d\n",
+	/*printf("string1  cpu:%d, sTime:%lf, rwbs:%s, action:%s, sSector:%ld, size:%d\n",
 		string1.cpu,
 		string1.sTime,
 		string1.rwbs,
 		string1.action,
 		string1.sSector,
 		string1.size);
+	*/
 	
 	//Only "D" action is eligible
 	if( strcmp(string1.action,"D") == 0 ){
@@ -140,34 +141,33 @@ void main(void)
 		//Succeed to find
 		if( string1.sSector == string2.sSector && \
 			strcmp(string2.action,"C") == 0 ){
-		    printf("Succeed, line:%s\n", line2);
+		    printf("Succeed\n");
+		    printf("line1:%s", line1);
+		    printf("line2:%s", line2);
 		    find = true;
 		    break;
 		}
 	    }//End of while()
 	    //Fail to find
 	    if(find == false){
-		printf("Fail to find corresponding string\n");
+		printf("Fail\n");
+		printf("line1:%s", line1);
 	    }
 	    //Write back
-	    memset(tmp, 0, sizeof(tmp));
+	    line1[strlen(line1)-1] = '\0';
 	    if(find == true){
-		sprintf(tmp, "%s%lf\n", line1, string2.sTime - string1.sTime);
-		printf("************ %s", tmp);
-    	    	fwrite(tmp, 1, strlen(tmp)+1, fpW);
+		sprintf(tmp, "%s,%lf\n", line1, string2.sTime - string1.sTime);
 		//Array update
 		sum[string2.size/8].total += string2.sTime - string1.sTime;
 		sum[string2.size/8].count ++;
 	    }else{
-		sprintf(tmp, "%s%s\n", line1, "Error");
-		printf("************ %s\n", tmp);
-    	    	fwrite(tmp, 1, strlen(tmp)+1, fpW);
+		sprintf(tmp, "%s,%s\n", line1, "Error");
 	    }
+	    printf("%s\n", tmp);
+	    fwrite(tmp, 1, strlen(tmp)+1, fpW);
 	    //Re-initialize
 	    find = false;
 	    fseek(fpR2, 0, SEEK_SET);
-	    memset(tmp, 0, sizeof(tmp));
-	    printf("\n");
 	} //End of if()
     }
     printf("\nThe END\n");
@@ -175,8 +175,8 @@ void main(void)
     //Print summary
     printf("sum = Total / Count\n");
     for(i=0; i<=SECTOR_ARRAY_SIZE; i++){
-	if(sum[i].count != 0){
-	    printf("%dKB = %lf / %d\n", i*8, sum[i].total, sum[i].count);
+	if(sum[i].count != 0){ 
+	    printf("%dKB = %lf/%d = %lf\n", i*8, sum[i].total, sum[i].count, sum[i].total/sum[i].count);
 	}
     }
     fclose(fpR1);
