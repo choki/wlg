@@ -1,5 +1,6 @@
 ./Makefile
 ./WLGenerator.c
 ./workload_generator.h
+./trace_parser.c
 ./workload_generator.c
 ./WLGenerator.h

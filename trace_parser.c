@@ -5,6 +5,7 @@
 #include <stdbool.h>	//boolean
 
 #define MAX_STR_LEN 1024
+#define SECTOR_ARRAY_SIZE 128
 
 typedef struct _readLine{
     int 	cpu;
@@ -15,6 +16,13 @@ typedef struct _readLine{
     int 	size;
     double 	eTime;
 } readLine;
+
+typedef struct _summary{
+    double total;
+    int  		 count;
+} summary;
+
+summary sum[SECTOR_ARRAY_SIZE] = {0};
 
 void main(void)
 {
@@ -31,10 +39,11 @@ void main(void)
     int cnt1 = 0;
     int cnt2 = 0;
     bool find = false;
+    int i = 0;
 
     fpR1 = fopen("./trace", "r");
     fpR2 = fopen("./trace", "r");
-    fpW = fopen("./trace_p", "a+");
+    fpW = fopen("./trace_p", "w+");
 
     line1 = malloc(sizeof(char)*MAX_STR_LEN);
     line2 = malloc(sizeof(char)*MAX_STR_LEN);
@@ -87,8 +96,10 @@ void main(void)
 	if( strcmp(string1.action,"D") == 0 ){
 	    while( getline(&line2, &len, fpR2) != -1 ){
 		//printf("%s", line2);
+		//line1 changes during strtok.....;;;;
+		strncpy(tmp, line2, strlen(line2)+1);
 
-		ptr = strtok(line2, ",");
+		ptr = strtok(tmp, ",");
 		string2.cpu = atoi(ptr);
 		cnt2++;
 		while(ptr != NULL){
@@ -139,12 +150,14 @@ void main(void)
 		printf("Fail to find corresponding string\n");
 	    }
 	    //Write back
-	    printf("\n");
 	    memset(tmp, 0, sizeof(tmp));
 	    if(find == true){
 		sprintf(tmp, "%s%lf\n", line1, string2.sTime - string1.sTime);
 		printf("************ %s", tmp);
     	    	fwrite(tmp, 1, strlen(tmp)+1, fpW);
+		//Array update
+		sum[string2.size/8].total += string2.sTime - string1.sTime;
+		sum[string2.size/8].count ++;
 	    }else{
 		sprintf(tmp, "%s%s\n", line1, "Error");
 		printf("************ %s\n", tmp);
@@ -154,10 +167,18 @@ void main(void)
 	    find = false;
 	    fseek(fpR2, 0, SEEK_SET);
 	    memset(tmp, 0, sizeof(tmp));
+	    printf("\n");
 	} //End of if()
     }
     printf("\nThe END\n");
     
+    //Print summary
+    printf("sum = Total / Count\n");
+    for(i=0; i<=SECTOR_ARRAY_SIZE; i++){
+	if(sum[i].count != 0){
+	    printf("%dKB = %lf / %d\n", i*8, sum[i].total, sum[i].count);
+	}
+    }
     fclose(fpR1);
     fclose(fpR2);
     fclose(fpW);

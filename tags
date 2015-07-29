@@ -13,11 +13,13 @@ DEBUG_MODE	workload_generator.h	8;"	d
 DIR_READ	WLGenerator.h	/^    DIR_READ=0,$/;"	e	enum:__anon1
 DIR_WRITE	WLGenerator.h	/^    DIR_WRITE$/;"	e	enum:__anon1
 FILE_PATH	workload_generator.h	/^    FILE_PATH,$/;"	e	enum:WG_PARAMETER_STR
+GET_ALIGNED_VALUE	workload_generator.h	22;"	d
 IO_DIR	WLGenerator.h	/^}IO_DIR;$/;"	t	typeref:enum:__anon1
 IO_SIGNAL	WLGenerator.h	7;"	d
 MAX_ADDR	workload_generator.h	/^    MAX_ADDR,		    \/\/ 4$/;"	e	enum:WG_PARAMETER_NUM
 MAX_FILE_SIZE	WLGenerator.h	6;"	d
 MAX_SIZE	workload_generator.h	/^    MAX_SIZE,		    \/\/ 6$/;"	e	enum:WG_PARAMETER_NUM
+MAX_STR_LEN	trace_parser.c	7;"	d	file:
 MIN_ADDR	workload_generator.h	/^    MIN_ADDR,		    \/\/ 5$/;"	e	enum:WG_PARAMETER_NUM
 MIN_SIZE	workload_generator.h	/^    MIN_SIZE,		    \/\/ 7$/;"	e	enum:WG_PARAMETER_NUM
 NONSEQUENTIAL_W	workload_generator.h	/^    NONSEQUENTIAL_W,	    \/\/ 9$/;"	e	enum:WG_PARAMETER_NUM
@@ -55,8 +57,17 @@ WG_TIME	workload_generator.h	/^	WG_TIME,		    \/\/ 0$/;"	e	enum:TEST_LENGTH_TYPE
 WG_WRITE	workload_generator.h	/^    WG_WRITE,			    \/\/ 1$/;"	e	enum:OPERATION_TYPE
 WRITE_W	workload_generator.h	/^    WRITE_W,		    \/\/ 11$/;"	e	enum:WG_PARAMETER_NUM
 _GNU_SOURCE	WLGenerator.c	1;"	d	file:
+_GNU_SOURCE	trace_parser.c	1;"	d	file:
 _GNU_SOURCE	workload_generator.c	5;"	d	file:
 __WORKLOAD_GENERATOR_H__	workload_generator.h	2;"	d
+_readLine	trace_parser.c	/^typedef struct _readLine{$/;"	s	file:
+_readLine::action	trace_parser.c	/^    char 	action[4];$/;"	m	struct:_readLine	file:	access:public
+_readLine::cpu	trace_parser.c	/^    int 	cpu;$/;"	m	struct:_readLine	file:	access:public
+_readLine::eTime	trace_parser.c	/^    double 	eTime;$/;"	m	struct:_readLine	file:	access:public
+_readLine::rwbs	trace_parser.c	/^    char 	rwbs[4];$/;"	m	struct:_readLine	file:	access:public
+_readLine::sSector	trace_parser.c	/^    long 	sSector;$/;"	m	struct:_readLine	file:	access:public
+_readLine::sTime	trace_parser.c	/^    double 	sTime;$/;"	m	struct:_readLine	file:	access:public
+_readLine::size	trace_parser.c	/^    int 	size;$/;"	m	struct:_readLine	file:	access:public
 _wg_env	workload_generator.h	/^typedef struct _wg_env {$/;"	s
 _wg_env::alignment	workload_generator.h	/^    unsigned int alignment;$/;"	m	struct:_wg_env	access:public
 _wg_env::alignment_unit	workload_generator.h	/^    unsigned int alignment_unit;$/;"	m	struct:_wg_env	access:public
@@ -76,9 +87,12 @@ _wg_env::test_length_type	workload_generator.h	/^    unsigned int test_length_ty
 _wg_env::total_test_req	workload_generator.h	/^    unsigned long total_test_req;$/;"	m	struct:_wg_env	access:public
 _wg_env::total_test_time	workload_generator.h	/^    unsigned int total_test_time;$/;"	m	struct:_wg_env	access:public
 _wg_env::write_w	workload_generator.h	/^    unsigned int write_w;$/;"	m	struct:_wg_env	access:public
+action	trace_parser.c	/^    char 	action[4];$/;"	m	struct:_readLine	file:	access:public
 alignment	workload_generator.h	/^    unsigned int alignment;$/;"	m	struct:_wg_env	access:public
 alignment_unit	workload_generator.h	/^    unsigned int alignment_unit;$/;"	m	struct:_wg_env	access:public
 burstiness_number	workload_generator.h	/^    unsigned int burstiness_number;$/;"	m	struct:_wg_env	access:public
+cpu	trace_parser.c	/^    int 	cpu;$/;"	m	struct:_readLine	file:	access:public
+eTime	trace_parser.c	/^    double 	eTime;$/;"	m	struct:_readLine	file:	access:public
 f_alignment	workload_generator.c	/^void f_alignment(unsigned long in)$/;"	f	signature:(unsigned long in)
 f_alignment	workload_generator.c	/^void f_alignment(unsigned long in);$/;"	p	file:	signature:(unsigned long in)
 f_alignment_unit	workload_generator.c	/^void f_alignment_unit(unsigned long in)$/;"	f	signature:(unsigned long in)
@@ -127,10 +141,13 @@ io_completion_handler	WLGenerator.c	/^static void io_completion_handler(int sig,
 io_enqueue	WLGenerator.c	/^static int io_enqueue(IO_DIR direction, struct aiocb *aiocbp){$/;"	f	file:	signature:(IO_DIR direction, struct aiocb *aiocbp)
 io_initialize	WLGenerator.c	/^static void io_initialize(struct aiocb * aiocbp, int fd, $/;"	f	file:	signature:(struct aiocb * aiocbp, int fd, unsigned int buflen, int fileOffset, int reqID)
 main	WLGenerator.c	/^void main(int argc, char *argv[]){$/;"	f	signature:(int argc, char *argv[])
+main	trace_parser.c	/^void main(void)$/;"	f	signature:(void)
 main	workload_generator.c	/^void main(void)$/;"	f	signature:(void)
 max_addr	workload_generator.h	/^    unsigned long max_addr;$/;"	m	struct:_wg_env	access:public
 max_size	workload_generator.h	/^    unsigned long max_size;$/;"	m	struct:_wg_env	access:public
 mem_allocation	WLGenerator.c	/^static int mem_allocation(char **buf, int reqSize, bool align){$/;"	f	file:	signature:(char **buf, int reqSize, bool align)
+mem_allocation	workload_generator.c	/^int mem_allocation(char **buf, int reqSize)$/;"	f	signature:(char **buf, int reqSize)
+mem_allocation	workload_generator.c	/^int mem_allocation(char **buf, int reqSize);$/;"	p	file:	signature:(char **buf, int reqSize)
 min_addr	workload_generator.h	/^    unsigned long min_addr;$/;"	m	struct:_wg_env	access:public
 min_size	workload_generator.h	/^    unsigned long min_size;$/;"	m	struct:_wg_env	access:public
 nonsequential_w	workload_generator.h	/^    unsigned int nonsequential_w;$/;"	m	struct:_wg_env	access:public
@@ -138,14 +155,19 @@ pose_time	workload_generator.h	/^    unsigned int pose_time; \/\/ms$/;"	m	struct
 print_log	WLGenerator.h	10;"	d
 print_log	WLGenerator.h	13;"	d
 rand_deterministic	workload_generator.h	/^    unsigned int rand_deterministic;$/;"	m	struct:_wg_env	access:public
+readLine	trace_parser.c	/^} readLine;$/;"	t	typeref:struct:_readLine	file:
 read_w	workload_generator.h	/^    unsigned int read_w;$/;"	m	struct:_wg_env	access:public
-select_op	workload_generator.c	/^int select_op(void)$/;"	f	signature:(void)
-select_op	workload_generator.c	/^int select_op(void);$/;"	p	file:	signature:(void)
-select_size	workload_generator.c	/^unsigned long select_size(unsigned long start_addr)$/;"	f	signature:(unsigned long start_addr)
-select_size	workload_generator.c	/^unsigned long select_size(unsigned long start_addr);$/;"	p	file:	signature:(unsigned long start_addr)
-select_start_addr	workload_generator.c	/^unsigned long select_start_addr(unsigned long prior_end_addr)$/;"	f	signature:(unsigned long prior_end_addr)
-select_start_addr	workload_generator.c	/^unsigned long select_start_addr(unsigned long prior_end_addr);$/;"	p	file:	signature:(unsigned long prior_end_addr)
+rwbs	trace_parser.c	/^    char 	rwbs[4];$/;"	m	struct:_readLine	file:	access:public
+sSector	trace_parser.c	/^    long 	sSector;$/;"	m	struct:_readLine	file:	access:public
+sTime	trace_parser.c	/^    double 	sTime;$/;"	m	struct:_readLine	file:	access:public
+select_op	workload_generator.c	/^int select_op(unsigned long cur_file_size)$/;"	f	signature:(unsigned long cur_file_size)
+select_op	workload_generator.c	/^int select_op(unsigned long cur_file_size);$/;"	p	file:	signature:(unsigned long cur_file_size)
+select_size	workload_generator.c	/^unsigned long select_size(unsigned long start_addr, int op, unsigned long cur_file_size)$/;"	f	signature:(unsigned long start_addr, int op, unsigned long cur_file_size)
+select_size	workload_generator.c	/^unsigned long select_size(unsigned long start_addr, int op, unsigned long cur_file_size);$/;"	p	file:	signature:(unsigned long start_addr, int op, unsigned long cur_file_size)
+select_start_addr	workload_generator.c	/^unsigned long select_start_addr(unsigned long prior_end_addr, int op, unsigned long cur_file_size)$/;"	f	signature:(unsigned long prior_end_addr, int op, unsigned long cur_file_size)
+select_start_addr	workload_generator.c	/^unsigned long select_start_addr(unsigned long prior_end_addr, int op, unsigned long cur_file_size);$/;"	p	file:	signature:(unsigned long prior_end_addr, int op, unsigned long cur_file_size)
 sequential_w	workload_generator.h	/^    unsigned int sequential_w;$/;"	m	struct:_wg_env	access:public
+size	trace_parser.c	/^    int 	size;$/;"	m	struct:_readLine	file:	access:public
 test_interface_type	workload_generator.h	/^    unsigned int test_interface_type;$/;"	m	struct:_wg_env	access:public
 test_length_type	workload_generator.h	/^    unsigned int test_length_type;$/;"	m	struct:_wg_env	access:public
 total_test_req	workload_generator.h	/^    unsigned long total_test_req;$/;"	m	struct:_wg_env	access:public
