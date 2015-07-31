@@ -1,7 +1,9 @@
 #CFLAGS = -g -O0
 
-all:
-	gcc $(CFLAGS) -o run workload_generator.c -lrt
+all: io
+
+io: gio.c io_generator.c io_replayer.c
+	gcc $(CFLAGS) -o run gio.c io_generator.c io_replayer.c -lrt -pthread
 
 parser: trace_parser.c
 	gcc -o parser trace_parser.c
