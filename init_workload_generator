@@ -3,38 +3,32 @@
 # 	application should run with "ROOT" authority.
 FILE_PATH /dev/sda1
 
-# Test mode
 # 0 -> Generating mode
 # 	Workload will be generated according to the below user setting.
 # 1 -> Replay mode
 # 	Workload will be replayed accroding to the trace file.
 # 	User setting ignored except FILE_PATH
-TEST_MODE 1
+TEST_MODE 0
 
 # Number of thread that will produce I/O request in parallel manner
 THREAD_NUM 2
 
-# TEST_INTERFAE_TYPE : 
 # 	0 -> Character Device (Unit : byte) 
 # 	1 -> Block Device (Unit : Sector)
-TEST_INTERFACE_TYPE 0
+TEST_INTERFACE 0
 
 
+# 0 -> Time, 
+# 1 -> Number of Requests
+TEST_LENGTH 1
 
-# TEST_LENGTH_TYPE : 
-# 	0 -> Time, 
-# 	1 -> Number of Requests
-TEST_LENGTH_TYPE 1
-
-# TOTAL_TEST_REQUESTS : 
-# 	if TEST_LENGTH_TYPE is time, 
+# if TEST_LENGTH_TYPE is time, 
 # 	this value will be ignored
 TOTAL_TEST_REQUESTS 100
 
-# TOTAL_TEST_TIME : 
-# 	Unit of value is 'ms' & 
-# 		if TEST_LENGTH_TYPE is number of requests, 
-# 	this value will be ignored
+# Unit of value is 'ms' & 
+# 	if TEST_LENGTH_TYPE is number of requests, 
+# this value will be ignored
 TOTAL_TEST_TIME 100000
 
 
@@ -48,12 +42,12 @@ MAX_SIZE 1000000
 MIN_SIZE 0
 
 # Each operation type is selected by each weight
-READ_W 100
-WRITE_W 0
+READ_W 50
+WRITE_W 50
 
 # Sequntiality is managed by weighs
-SEQUENTIAL_W 0
-NONSEQUENTIAL_W 100
+SEQUENTIAL_W 50
+NONSEQUENTIAL_W 50
 
 # After requests as many as burstiness number are issued, 
 # 	request issuing is posed for pose time
@@ -61,17 +55,16 @@ BURSTINESS_NUMBER 1000
 # Unit of pose time is 'ms'
 POSE_TIME 0
 
-# ALIGNMENT : DIRECT_IO requires aligned start address & muliple of 512 size
+# DIRECT_IO requires aligned start address & muliple of 512 size
 # 	0 -> OFF, 
 # 	1 -> ON
 ALIGNMENT 1 
 
-# ALIGNMENT_UNIT : 
-# 	Unit is byte
+# Unit is byte
 ALIGNMENT_UNIT 512
 
 # Make random number deterministically.
 # 	1 -> Deterministic
 # 	0 -> Non-deterministic
-RANDOM_DETERMINISTIC 0
+RANDOM_DETERMINISTIC 1
 

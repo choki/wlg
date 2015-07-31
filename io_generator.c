@@ -20,7 +20,7 @@
  	  Static Functions 
  ********************************************/
 static int select_op(unsigned long cur_file_size);
-static unsigned long select_start_addr(unsigned long prior_end_addr, int op, unsigned long cur_file_size);
+static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, unsigned long prior_end_addr, int op, unsigned long cur_file_size);
 static unsigned long select_size(unsigned long start_addr, int op, unsigned long cur_file_size);
 static void fill_data(char *buf, unsigned int size);
 static unsigned int get_rand_range(unsigned int min, unsigned int max);
@@ -33,6 +33,7 @@ void *workload_generator(void *arg)
 {
     int fd;
     int op;
+    SEQUENTIALITY_TYPE seq_rnd;
     size_t ret;
     unsigned long start_addr;
     unsigned long size;
@@ -40,31 +41,32 @@ void *workload_generator(void *arg)
     unsigned int counter = 0;
     unsigned long i = 0;
     char *buf;
-    struct timeval current_time, \
-	posed_time, \
+    struct timeval current_time, 
+	posed_time, 
 	start_time;
     unsigned long max_written_size = 0;
+    pthread_t tid;
 #ifdef ONLY_FOR_TEST
     int test_count=1;
 #endif
-    desc = (wg_env *)arg;
 
+    desc = (wg_env *)arg;
     if(desc->rand_deterministic == 0){
 	srand(time(NULL));
     }
+    
+    tid = pthread_self();
 
     if( (fd = open(desc->file_path, O_CREAT|O_RDWR|O_DIRECT, 0666)) == -1){
     //if( (fd = open(desc->file_path, O_CREAT|O_RDWR, 0666)) == -1){
 	PRINT("Error on opening the init_file of workload generator, file:%s, line:%d, fd=%d\n", __func__, __LINE__, fd);
 	exit(1);
     }
-
     mem_allocation( &buf, (desc->max_size)*(desc->interface_unit) );
     if (NULL == buf) {
 	PRINT("Error on memory allocation, file:%s, line:%d\n", __func__, __LINE__);
 	exit(1);
     }
-
 #ifdef ONLY_FOR_TEST
     lseek(fd, GET_ALIGNED_VALUE(desc->max_addr-512), SEEK_SET);
     fill_data(buf, 512);
@@ -74,33 +76,34 @@ void *workload_generator(void *arg)
 	exit(1);
     }
     max_written_size = desc->max_addr;
-    //size = 2048;
+    size = 2048;
 #endif
     //usleep(50);
     gettimeofday(&start_time, NULL);
 
+    PRINT("\n");
     while (1) {
 	op = select_op(max_written_size);
-	start_addr = select_start_addr(prior_end_addr, op, max_written_size);
+	seq_rnd = select_start_addr(&start_addr, prior_end_addr, op, max_written_size);
 	
 #ifdef ONLY_FOR_TEST
-	size = select_size(start_addr, op , max_written_size);
-
 	//TODO for test
 	/*if(test_count%4 == 1){
 	    size *= 2;
 	}
 	test_count++;*/
+#else
+	size = select_size(start_addr, op , max_written_size);
 #endif
-
-	if (WG_READ == op)
-	    PRINT("READ  ");
-	else
-	    PRINT("WRITE ");
-
 	fill_data(buf, size);
 
-	PRINT("\tstart_addr:%12lu \t size:%12lu\n", start_addr, size);
+	PRINT("tid:%lu %s %s Addr:%12lu \t Size:%12lu\n", 
+		tid,
+		(seq_rnd==WG_SEQ?"SEQ":"RND"),
+		(op==WG_READ?"READ ":"WRITE"), 
+		start_addr, 
+		size);
+
 	switch (op){
 	    case WG_READ:
 		lseek(fd, start_addr, SEEK_SET);
@@ -156,11 +159,9 @@ void *workload_generator(void *arg)
 	    }
 	}
     }
-    PRINT("END OF WG\n");
     close(fd);
     free(buf);
-    free(desc->file_path);
-    free(desc);
+    PRINT("END OF WG\n");
 }
 
 /********************************************
@@ -182,36 +183,37 @@ static int select_op(unsigned long cur_file_size)
 	return WG_WRITE;
 }
 
-static unsigned long select_start_addr(unsigned long prior_end_addr, int op, unsigned long cur_file_size)
+static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, unsigned long prior_end_addr, int op, unsigned long cur_file_size)
 {
     unsigned long selector;
+    SEQUENTIALITY_TYPE seq_rnd;
 
     selector = get_rand_range(0, desc->sequential_w + desc->nonsequential_w - 1);
 
     //Sequential case
     if(selector < desc->sequential_w){
-	selector = prior_end_addr;
+	*start_addr = prior_end_addr;
 	if(selector >= desc->max_addr){
-	    selector = desc->min_addr;
+	    *start_addr = desc->min_addr;
 	}
-	PRINT("S ");
+	seq_rnd = WG_SEQ;
     }
     //Random case
     else{
 	if(op == WG_READ){
-	    selector = get_rand_range(desc->min_addr, cur_file_size - 1);
-	    //PRINT("Read rand: cur_file_size=%lu, selector=%lu\n", cur_file_size, selector);
+	    *start_addr = get_rand_range(desc->min_addr, cur_file_size - 1);
+	    //PRINT("Read rand: cur_file_size=%lu, start_addr=%lu\n", cur_file_size, *start_addr);
 	}else{
-	    selector = get_rand_range(desc->min_addr, desc->max_addr - 1);
+	    *start_addr = get_rand_range(desc->min_addr, desc->max_addr - 1);
 	}
-	PRINT("R ");
+	seq_rnd = WG_RND;
     }
 
     if( desc->alignment ){
-	selector = GET_ALIGNED_VALUE(selector);
+	*start_addr = GET_ALIGNED_VALUE(*start_addr);
     }
 
-    return selector;
+    return seq_rnd;
 }
 
 static unsigned long select_size(unsigned long start_addr, int op, unsigned long cur_file_size)

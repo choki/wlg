@@ -38,26 +38,26 @@ extern void *workload_generator(void *arg);
 /********************************************
  ****   Functions for Initialization   ******
  ********************************************/
-void f_file_path(char *in);
-void f_test_mode(unsigned long in);
-void f_thread_num(unsigned long in);
-void f_test_interface_type(unsigned long in);
-void f_test_length_type(unsigned long in);
-void f_total_test_req(unsigned long in);
-void f_total_test_time(unsigned long in);
-void f_max_addr(unsigned long in);
-void f_min_addr(unsigned long in);
-void f_max_size(unsigned long in);
-void f_min_size(unsigned long in);
-void f_sequential_w(unsigned long in);
-void f_nonsequential_w(unsigned long in);
-void f_read_w(unsigned long in);
-void f_write_w(unsigned long in);
-void f_burstiness_number(unsigned long in);
-void f_pose_time(unsigned long in);
-void f_alignment(unsigned long in);
-void f_alignment_unit(unsigned long in);
-void f_random_deterministic(unsigned long in);
+static void f_file_path(char *in);
+static void f_test_mode(unsigned long in);
+static void f_thread_num(unsigned long in);
+static void f_test_interface_type(unsigned long in);
+static void f_test_length_type(unsigned long in);
+static void f_total_test_req(unsigned long in);
+static void f_total_test_time(unsigned long in);
+static void f_max_addr(unsigned long in);
+static void f_min_addr(unsigned long in);
+static void f_max_size(unsigned long in);
+static void f_min_size(unsigned long in);
+static void f_sequential_w(unsigned long in);
+static void f_nonsequential_w(unsigned long in);
+static void f_read_w(unsigned long in);
+static void f_write_w(unsigned long in);
+static void f_burstiness_number(unsigned long in);
+static void f_pose_time(unsigned long in);
+static void f_alignment(unsigned long in);
+static void f_alignment_unit(unsigned long in);
+static void f_random_deterministic(unsigned long in);
 
 
 /******************************************************************************************************
@@ -66,8 +66,8 @@ void f_random_deterministic(unsigned long in);
 static char wg_param_num[NUM_WG_PARAMETER_NUM][255] = { 
     "TEST_MODE",
     "THREAD_NUM",
-    "TEST_INTERFACE_TYPE",		
-    "TEST_LENGTH_TYPE",			
+    "TEST_INTERFACE",		
+    "TEST_LENGTH",			
     "TOTAL_TEST_REQUESTS",		
     "TOTAL_TEST_TIME",			
     "MAX_ADDRESS",			
@@ -190,6 +190,13 @@ void main(void)
 	    }
 	}
     }
+
+    free(tmpChar);
+    free(line);
+    free(buf);
+    free(tmp);
+    fclose(filp);
+
     //thread
     tinfo = malloc(setting->thread_num * sizeof(thread_info));
     for(i=0; i<setting->thread_num; i++){
@@ -212,16 +219,13 @@ void main(void)
 	    PRINT("Error on thread join, line:%d, errno:%d\n", __LINE__, tid);
 	    exit(1);
 	}
-	PRINT("#%u Thread joined with staus %s\n", tinfo[i].thr_num, (char *)status);
+	PRINT("#%u Thread joined with status %s\n", tinfo[i].thr_num, (char *)status);
 	free(status);
     }
-
-    free(tmpChar);
-    free(line);
-    free(buf);
-    free(tmp);
-    fclose(filp);
-
+    if(setting->file_path)
+	free(setting->file_path);
+    if(setting)
+	free(setting);
     exit(0);
 }
 
@@ -230,21 +234,21 @@ void main(void)
  ****   Functions for Initialization   ******
  ********************************************/
 
-void f_file_path(char *in)
+static void f_file_path(char *in)
 {
     setting->file_path = malloc(sizeof(char) * WG_STR_LENGTH);
     strncpy(setting->file_path, in, (int)strlen(in)+1);
     PRINT("file path : %s\n", (char *)setting->file_path);
 }
-void f_test_mode(unsigned long in){
+static void f_test_mode(unsigned long in){
     setting->test_mode = (unsigned int)in;
     PRINT("test mode : %u\n", (unsigned int)in);
 }
-void f_thread_num(unsigned long in){
+static void f_thread_num(unsigned long in){
     setting->thread_num = (unsigned int)in;
     PRINT("thread number : %u\n", (unsigned int)in);
 }
-void f_test_interface_type(unsigned long in)
+static void f_test_interface_type(unsigned long in)
 {
     setting->test_interface_type = (unsigned int)in;
     PRINT("test_interface_type : %u\n", (unsigned int)in);
@@ -253,81 +257,81 @@ void f_test_interface_type(unsigned long in)
     else
 	setting->interface_unit = SIZE_OF_SECTOR;
 }
-void f_test_length_type(unsigned long in)
+static void f_test_length_type(unsigned long in)
 {
     setting->test_length_type = (unsigned int)in;
     PRINT("test_length_type : %u\n", (unsigned int)in);
 }
-void f_total_test_req(unsigned long in)
+static void f_total_test_req(unsigned long in)
 {
     setting->total_test_req = (unsigned long)in;
     PRINT("total_test_req : %u\n", (unsigned int)in);
 }
-void f_total_test_time(unsigned long in)
+static void f_total_test_time(unsigned long in)
 {
     setting->total_test_time = (unsigned int)in;
     PRINT("total_test_time : %u\n", (unsigned int)in);
 }
-void f_max_addr(unsigned long in)
+static void f_max_addr(unsigned long in)
 {
     setting->max_addr = in;
     PRINT("max_addr : %lu\n", in);
 }
-void f_min_addr(unsigned long in)
+static void f_min_addr(unsigned long in)
 {
     setting->min_addr = in;
     PRINT("min_addr : %lu\n", in);
 }
-void f_max_size(unsigned long in)
+static void f_max_size(unsigned long in)
 {
     setting->max_size = in;
     PRINT("max_size : %lu\n", in);
 }
-void f_min_size(unsigned long in)
+static void f_min_size(unsigned long in)
 {
     setting->min_size = in;
     PRINT("min_size : %lu\n", in);
 }
-void f_sequential_w(unsigned long in)
+static void f_sequential_w(unsigned long in)
 {
     setting->sequential_w = (unsigned int)in;
     PRINT("sequential_w : %u\n", (unsigned int)in);
 }
-void f_nonsequential_w(unsigned long in)
+static void f_nonsequential_w(unsigned long in)
 {
     setting->nonsequential_w = (unsigned int)in;
     PRINT("nonsequential_w : %u\n", (unsigned int)in);
 }
-void f_read_w(unsigned long in)
+static void f_read_w(unsigned long in)
 {
     setting->read_w = (unsigned int)in;
     PRINT("read_w : %u\n", (unsigned int)in);
 }
-void f_write_w(unsigned long in)
+static void f_write_w(unsigned long in)
 {
     setting->write_w = (unsigned int)in;
     PRINT("write_w : %u\n", (unsigned int)in);
 }
-void f_burstiness_number(unsigned long in){
+static void f_burstiness_number(unsigned long in){
     setting->burstiness_number = (unsigned int)in;
     PRINT("burstiness_number : %u\n", (unsigned int)in);
 }
-void f_pose_time(unsigned long in)
+static void f_pose_time(unsigned long in)
 {
     setting->pose_time = (unsigned int)in;
     PRINT("pose_time : %u\n", (unsigned int)in);
 }
-void f_alignment(unsigned long in)
+static void f_alignment(unsigned long in)
 {
     setting->alignment = (unsigned int)in;
     PRINT("alignment : %u\n", (unsigned int)in);
 }
-void f_alignment_unit(unsigned long in)
+static void f_alignment_unit(unsigned long in)
 {
     setting->alignment_unit = (unsigned int)in;
     PRINT("alignment_unit : %u\n", (unsigned int)in);
 }
-void f_random_deterministic(unsigned long in){
+static void f_random_deterministic(unsigned long in){
     setting->rand_deterministic = (unsigned int)in;
     PRINT("random deterministic : %u\n", (unsigned int)in);
 }

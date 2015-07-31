@@ -6,6 +6,7 @@
  ******************************************************************************************************/
 
 #define DEBUG_MODE
+#define ONLY_FOR_TEST
 
 #ifdef DEBUG_MODE
 #define PRINT(...) \
@@ -21,23 +22,23 @@
 //#define GET_ALIGNED_VALUE(v) ((v)+SIZE_OF_SECTOR-1)/SIZE_OF_SECTOR*SIZE_OF_SECTOR
 #define GET_ALIGNED_VALUE(v) ((v)-((v)%SIZE_OF_SECTOR))
 
-enum TEST_INTERFACE_TYPE{
-    WG_CHARDEV,			    // 0
-    WG_BLKDEV,			    // 1
-    NUM_TEST_LENGTH_TYPE	    // 2
-};
+typedef enum {
+    WG_CHARDEV,			   
+    WG_BLKDEV,			   
+    NUM_INTERFACE_TYPE	    
+}INTERFACE_TYPE;
 
-enum TEST_LENGTH_TYPE {
-	WG_TIME,		    // 0
-	WG_NUMBER,		    // 1
-	NUM_TEST_LENGHTH_TYPE	    // 2
-};
+typedef enum {
+    WG_TIME,		    
+    WG_NUMBER,		    
+    NUM_TEST_LENGHTH_TYPE	   
+}TEST_LENGTH_TYPE;
 
-enum WG_PARAMETER_NUM { 
+typedef enum { 
     TEST_MODE,
     THREAD_NUM,
-    TEST_INTERFACE_TYPE,    
-    TEST_LENGTH_TYPE,	    
+    TEST_INTERFACE,    
+    TEST_LENGTH,	    
     TOTAL_TEST_REQUESTS,    
     TOTAL_TEST_TIME,	    
     MAX_ADDR,		    
@@ -54,19 +55,24 @@ enum WG_PARAMETER_NUM {
     ALIGNMENT_UNIT,	    
     RANDOM_DETERMINISTIC,
     NUM_WG_PARAMETER_NUM,   
-};
+}WG_PARAMETER_NUM;
 
-enum WG_PARAMETER_STR { 
+typedef enum { 
     FILE_PATH,
     NUM_WG_PARAMETER_STR,	    
-};
+}WG_PARAMETER_STR;
 
-enum OPERATION_TYPE {
-    WG_READ,			    // 0
-    WG_WRITE,			    // 1
-    NUM_OPERATION_TYPE		    // 2
-};
+typedef enum {
+    WG_READ,		
+    WG_WRITE,		
+    NUM_OPERATION_TYPE	
+}OPERATION_TYPE;
 
+typedef enum {
+    WG_SEQ,			    
+    WG_RND,			   
+    NUM_SEQUENTIALITY_TYPE	
+}SEQUENTIALITY_TYPE;
 /******************************************************************************************************
  *************                                 Structures                                 *************
  ******************************************************************************************************/
