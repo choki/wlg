@@ -16,9 +16,7 @@
 #include <sched.h>	//sched_affinity()
 #include "gio.h"
 
-/********************************************
- 	  Static Functions 
- ********************************************/
+/* Static Functions */
 static int select_op(unsigned long cur_file_size);
 static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, unsigned long prior_end_addr, int op, unsigned long cur_file_size);
 static unsigned long select_size(unsigned long start_addr, int op, unsigned long cur_file_size);
@@ -164,9 +162,7 @@ void *workload_generator(void *arg)
     PRINT("END OF WG\n");
 }
 
-/********************************************
- ***  Functions for Workload Generation  ****
- ********************************************/
+/*  Functions for Workload Generation */
 static int select_op(unsigned long cur_file_size)
 {
     int selector;

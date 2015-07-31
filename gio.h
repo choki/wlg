@@ -1,12 +1,8 @@
 #ifndef __GIO_H__
 #define __GIO_H__
 
-/******************************************************************************************************
- *************                                 Defines                                    *************
- ******************************************************************************************************/
-
 #define DEBUG_MODE
-#define ONLY_FOR_TEST
+//#define ONLY_FOR_TEST
 
 #ifdef DEBUG_MODE
 #define PRINT(...) \
@@ -22,6 +18,7 @@
 //#define GET_ALIGNED_VALUE(v) ((v)+SIZE_OF_SECTOR-1)/SIZE_OF_SECTOR*SIZE_OF_SECTOR
 #define GET_ALIGNED_VALUE(v) ((v)-((v)%SIZE_OF_SECTOR))
 
+/* Types */
 typedef enum {
     WG_CHARDEV,			   
     WG_BLKDEV,			   
@@ -73,14 +70,8 @@ typedef enum {
     WG_RND,			   
     NUM_SEQUENTIALITY_TYPE	
 }SEQUENTIALITY_TYPE;
-/******************************************************************************************************
- *************                                 Structures                                 *************
- ******************************************************************************************************/
 
-/********************************************
- *****   Environmental Structures  **********
- ********************************************/
-
+/* Structures */
 typedef struct _wg_env {
     char *file_path;
     unsigned int test_mode;

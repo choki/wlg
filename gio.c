@@ -1,7 +1,3 @@
-/******************************************************************************************************
- *************                                 Headers                                    *************
- ******************************************************************************************************/
-
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <fcntl.h>
@@ -22,22 +18,14 @@
 #include "io_generator.h"
 #include "io_replayer.h"
 
-/******************************************************************************************************
- *************                           Local Variables                                  *************
- ******************************************************************************************************/
+/* Local Variables */
 static wg_env *setting;
 
-/******************************************************************************************************
- *************                   Prototypes of Public Functions                           *************
- ******************************************************************************************************/
-
+/* Extern Functions */
 extern void *workload_replayer(void *arg);
 extern void *workload_generator(void *arg);
 
-
-/********************************************
- ****   Functions for Initialization   ******
- ********************************************/
+/* Functions for Initialization */
 static void f_file_path(char *in);
 static void f_test_mode(unsigned long in);
 static void f_thread_num(unsigned long in);
@@ -59,10 +47,7 @@ static void f_alignment(unsigned long in);
 static void f_alignment_unit(unsigned long in);
 static void f_random_deterministic(unsigned long in);
 
-
-/******************************************************************************************************
- *************                  Local Arrays For Initialization                           *************
- ******************************************************************************************************/
+/* Local Arrays For Initialization */
 static char wg_param_num[NUM_WG_PARAMETER_NUM][255] = { 
     "TEST_MODE",
     "THREAD_NUM",
@@ -115,9 +100,6 @@ static void (*wg_param_str_cmd[NUM_WG_PARAMETER_STR])(char *) = {
     f_file_path,
 };
 
-/******************************************************************************************************
- *************                            Public Functions                                 ************
- ******************************************************************************************************/
 
 void main(void)
 {
@@ -197,7 +179,7 @@ void main(void)
     free(tmp);
     fclose(filp);
 
-    //thread
+    //thread related
     tinfo = malloc(setting->thread_num * sizeof(thread_info));
     for(i=0; i<setting->thread_num; i++){
 	tinfo[i].thr_num;
@@ -222,6 +204,7 @@ void main(void)
 	PRINT("#%u Thread joined with status %s\n", tinfo[i].thr_num, (char *)status);
 	free(status);
     }
+
     if(setting->file_path)
 	free(setting->file_path);
     if(setting)
@@ -230,10 +213,7 @@ void main(void)
 }
 
 
-/********************************************
- ****   Functions for Initialization   ******
- ********************************************/
-
+/* Functions for Initialization */
 static void f_file_path(char *in)
 {
     setting->file_path = malloc(sizeof(char) * WG_STR_LENGTH);
