@@ -46,6 +46,7 @@ tags
 *~
 syncall
 trace
+trace_p
 trace.blktrace.*
 parser
 run
