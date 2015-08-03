@@ -17,6 +17,7 @@
 #include "gio.h"
 #include "io_generator.h"
 #include "io_replayer.h"
+#include "common.h"
 
 /* Local Variables */
 static wg_env *setting;
@@ -82,7 +83,7 @@ static void (*wg_param_num_cmd[NUM_WG_PARAMETER_NUM])(unsigned long) = {
     f_total_test_req,			
     f_total_test_time,			
     f_max_addr,			
-    f_min_addr,			   					
+    f_min_addr,		
     f_max_size,			
     f_min_size,			
     f_sequential_w,		
@@ -194,6 +195,8 @@ void main(void)
 	    exit(1);
 	}
     }
+
+
 
     for(i=0; i<setting->thread_num; i++){
 	tid = pthread_join(tinfo[i].thr, (void *)&status);

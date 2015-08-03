@@ -1,6 +1,5 @@
 
 #define _GNU_SOURCE
-
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/types.h>
@@ -15,6 +14,9 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sched.h>	//sched_affinity()
+#include "gio.h"
+#include "io_replayer.h"
+#include "common.h"
 
 void *workload_replayer(void *arg)
 {

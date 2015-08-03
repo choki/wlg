@@ -1,4 +1,3 @@
-
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <fcntl.h>
@@ -15,6 +14,8 @@
 #include <unistd.h>
 #include <sched.h>	//sched_affinity()
 #include "gio.h"
+#include "common.h"
+
 
 /* Static Functions */
 static int select_op(unsigned long cur_file_size);

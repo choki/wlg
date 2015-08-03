@@ -1,15 +1,7 @@
 #ifndef __GIO_H__
 #define __GIO_H__
 
-#define DEBUG_MODE
 //#define ONLY_FOR_TEST
-
-#ifdef DEBUG_MODE
-#define PRINT(...) \
-    	do{ printf(__VA_ARGS__); }while(0)
-#else
-#define PRINT
-#endif
 
 #define WG_STR_LENGTH   1024
 #define SIZE_OF_SECTOR 	512

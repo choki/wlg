@@ -3,7 +3,7 @@
 all: io
 
 io: gio.c io_generator.c io_replayer.c
-	gcc $(CFLAGS) -o run gio.c io_generator.c io_replayer.c -lrt -pthread
+	gcc $(CFLAGS) -o run gio.c io_generator.c io_replayer.c io_replayer_queue.c common.c -lrt -pthread
 
 parser: trace_parser.c
 	gcc -o parser trace_parser.c
