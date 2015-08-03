@@ -19,7 +19,6 @@ void main(void)
     size_t len = 0;
     readLine string1;
     readLine string2;
-    char *ptr;
     bool find = false;
     int i = 0;
 
@@ -72,7 +71,7 @@ void main(void)
 	    find = false;
 	    fseek(fpR2, 0, SEEK_SET);
 	} //End of if()
-    }
+    } //End of while()
     printf("\nThe END\n");
     
     //Print summary

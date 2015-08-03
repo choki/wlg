@@ -17,6 +17,7 @@
 #include "gio.h"
 #include "io_generator.h"
 #include "io_replayer.h"
+#include "io_replayer_queue.h"
 #include "common.h"
 
 /* Local Variables */
@@ -26,6 +27,8 @@ static wg_env *setting;
 extern void *workload_replayer(void *arg);
 extern void *workload_generator(void *arg);
 
+static void load_settings(void);
+static void trace_feeder(void);
 /* Functions for Initialization */
 static void f_file_path(char *in);
 static void f_test_mode(unsigned long in);
@@ -104,6 +107,87 @@ static void (*wg_param_str_cmd[NUM_WG_PARAMETER_STR])(char *) = {
 
 void main(void)
 {
+    int i;
+    thread_info *tinfo;
+     int tid;
+     int status;
+
+    //load user initial settings
+    load_settings();
+
+    //thread related
+    tinfo = malloc(setting->thread_num * sizeof(thread_info));
+    for(i=0; i<setting->thread_num; i++){
+	tinfo[i].thr_num;
+
+	if(setting->test_mode == WG_GENERATING_MODE){
+	    tid = pthread_create(&tinfo[i].thr, NULL, &workload_generator, (void *)setting);
+	}else if(setting->test_mode == WG_REPLAY_MODE){
+	    tid = pthread_create(&tinfo[i].thr, NULL, &workload_replayer, (void *)setting);
+	}
+	if(tid < 0){
+	    PRINT("Error on thread creation, line:%d, errno:%d\n", __LINE__, tid);
+	    exit(1);
+	}
+    }
+    if(setting->test_mode == WG_REPLAY_MODE){
+	init_queue(setting->thread_num);
+	//Provid trace input to request queue in each thread.
+	trace_feeder();
+	//TODO for test
+	for(i=0; i<setting->thread_num; i++){
+	    print_queue(i);
+	}
+    }
+    for(i=0; i<setting->thread_num; i++){
+	tid = pthread_join(tinfo[i].thr, (void **)&status);
+	if(tid < 0){
+	    PRINT("Error on thread join, line:%d, errno:%d\n", __LINE__, tid);
+	    exit(1);
+	}
+	PRINT("#%u Thread joined with status %d\n", tinfo[i].thr_num, status);
+	PRINT("1\n");
+    }
+    terminate_queue();
+    if(setting->file_path)
+	free(setting->file_path);
+    if(setting)
+	free(setting);
+    free(tinfo);
+    exit(0);
+}
+
+static void trace_feeder(void)
+{
+    FILE *fpR = NULL;
+    char *line = NULL;
+    char *tmp = NULL;
+    size_t len = 0;
+    readLine string;
+    unsigned int valid_cnt = 0;
+
+    fpR = fopen("./trace", "r");
+
+    line = malloc(sizeof(char)*MAX_STR_LEN);
+    tmp = malloc(sizeof(char)*MAX_STR_LEN);
+
+    while( getline(&line, &len, fpR) != -1 ){
+	//Parsing
+	parse_one_line(line, &string);
+	
+	//Only "D" action is eligible
+	if( strcmp(string.action,"D") == 0 ){
+	    en_queue(valid_cnt%(setting->thread_num), string);
+	    valid_cnt++;
+	}
+    }
+    fclose(fpR);
+    free(line);
+    free(tmp);
+}
+
+static void load_settings(void)
+{
     FILE *filp = NULL;
     size_t len = 0;
     char *buf;
@@ -180,41 +264,7 @@ void main(void)
     free(tmp);
     fclose(filp);
 
-    //thread related
-    tinfo = malloc(setting->thread_num * sizeof(thread_info));
-    for(i=0; i<setting->thread_num; i++){
-	tinfo[i].thr_num;
-
-	if(setting->test_mode == 0){
-	    tid = pthread_create(&tinfo[i].thr, NULL, &workload_generator, (void *)setting);
-	}else if(setting->test_mode == 1){
-	    tid = pthread_create(&tinfo[i].thr, NULL, &workload_replayer, (void *)setting);
-	}
-	if(tid < 0){
-	    PRINT("Error on thread creation, line:%d, errno:%d\n", __LINE__, tid);
-	    exit(1);
-	}
-    }
-
-
-
-    for(i=0; i<setting->thread_num; i++){
-	tid = pthread_join(tinfo[i].thr, (void *)&status);
-	if(tid < 0){
-	    PRINT("Error on thread join, line:%d, errno:%d\n", __LINE__, tid);
-	    exit(1);
-	}
-	PRINT("#%u Thread joined with status %s\n", tinfo[i].thr_num, (char *)status);
-	free(status);
-    }
-
-    if(setting->file_path)
-	free(setting->file_path);
-    if(setting)
-	free(setting);
-    exit(0);
 }
-
 
 /* Functions for Initialization */
 static void f_file_path(char *in)

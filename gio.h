@@ -11,6 +11,12 @@
 #define GET_ALIGNED_VALUE(v) ((v)-((v)%SIZE_OF_SECTOR))
 
 /* Types */
+typedef enum{
+    WG_GENERATING_MODE,
+    WG_REPLAY_MODE,
+    NUM_TEST_MODE_TYPE
+}TEST_MODE_TYPE;
+
 typedef enum {
     WG_CHARDEV,			   
     WG_BLKDEV,			   

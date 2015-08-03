@@ -5,7 +5,6 @@
 #include <stdlib.h>	//exit
 #include <stdint.h> 	//uint64_t
 #include "io_replayer_queue.h"
-#include "common.h"
 
 req_queue *r_queue;
 
@@ -25,17 +24,15 @@ void init_queue(unsigned int total_thread_num)
     }
 }
 
-void terminate_queue(unsigned int total_thread_num){
-    int i;
-    for(i=0; i<total_thread_num; i++){
-	free(r_queue);
-    }
+void terminate_queue(void){
+    free(r_queue);
 }
 
-void en_queue(int thread_id, request r)
+void en_queue(int thread_id, readLine r)
 {
     req_queue *tmp_queue = &r_queue[thread_id];
     req_node *new_node;
+    //TODO free
     new_node = (req_node *)malloc(sizeof(req_node));
     if(new_node == NULL){
 	PRINT("Error on malloc, file:%s, line:%d\n", __func__, __LINE__);
@@ -46,16 +43,20 @@ void en_queue(int thread_id, request r)
 
     //TODO lock??
     if(tmp_queue->num_node == 0){
+	tmp_queue->head = new_node;
 	tmp_queue->tail = new_node;
+    }else{
+	tmp_queue->head->next = new_node;
+	tmp_queue->head = new_node;
     }
-    tmp_queue->head = new_node;
     tmp_queue->num_node++;
 }
 
-request de_queue(int thread_id)
+readLine de_queue(int thread_id)
 {
+    //TODO check free properly
     req_queue *tmp_queue = &r_queue[thread_id];
-    request del_req;
+    readLine del_req;
 
     if(tmp_queue->tail == NULL){
 	PRINT("Queue is empty\n");
@@ -67,3 +68,28 @@ request de_queue(int thread_id)
     }
     return del_req;
 }
+
+void print_queue(int thread_id)
+{
+    unsigned int cnt = 0;
+    req_node *node = r_queue[thread_id].tail;
+    
+    printf("Print queue#%d, total node#:%u\n", thread_id, r_queue[thread_id].num_node);
+    while(node != NULL){
+	printf("node#%d  cpu:%d, sTime:%lf, rwbs:%s, action:%s, sSector:%ld, size:%d\n",
+		cnt,
+		node->req.cpu,
+		node->req.sTime,
+		node->req.rwbs,
+		node->req.action,
+		node->req.sSector,
+		node->req.size);
+	node = node->next;
+	cnt++;
+    }
+}
+
+
+
+
+
