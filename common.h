@@ -14,7 +14,7 @@
 typedef struct _readLine{
     int 	cpu;
     double 	sTime;
-    char 	rwbs[4];
+    char 	rwbs[6];	//In replay mode, this value also can indicate queue empty status with value "EMPTY"
     char 	action[4];
     long 	sSector;
     int 	size;

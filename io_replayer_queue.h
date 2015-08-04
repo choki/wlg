@@ -19,6 +19,8 @@ void init_queue(unsigned int total_thread_num);
 void terminate_queue(void);
 void en_queue(int thread_id, readLine r);
 readLine de_queue(int thread_id);
+void set_queue_status(int value);
+int get_queue_status(int thread_id);
 void print_queue(int thread_id);
 
 #endif //__IO_REPLAYER_QUEUE_H__

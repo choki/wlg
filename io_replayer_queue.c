@@ -4,9 +4,11 @@
 #include <sys/types.h>
 #include <stdlib.h>	//exit
 #include <stdint.h> 	//uint64_t
+#include <string.h>
 #include "io_replayer_queue.h"
 
 req_queue *r_queue;
+static int file_read_finished = 0;
 
 void init_queue(unsigned int total_thread_num)
 {
@@ -59,7 +61,8 @@ readLine de_queue(int thread_id)
     readLine del_req;
 
     if(tmp_queue->tail == NULL){
-	PRINT("Queue is empty\n");
+	//PRINT("EmptyQ ");
+	strcpy(del_req.rwbs, "EMPTY");
     }else{
 	del_req = tmp_queue->tail->req;
 	tmp_queue->tail = tmp_queue->tail->next;
@@ -67,6 +70,19 @@ readLine de_queue(int thread_id)
 	tmp_queue->num_node--;
     }
     return del_req;
+}
+
+void set_queue_status(int value)
+{
+    file_read_finished = value;
+}
+
+int get_queue_status(int thread_id)
+{
+    if(file_read_finished && (r_queue[thread_id].num_node == 0))
+	return 1;
+    else
+	return 0;
 }
 
 void print_queue(int thread_id)

@@ -13,6 +13,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sched.h>	//sched_affinity()
+#include <pthread.h>
 #include "gio.h"
 #include "common.h"
 
@@ -25,8 +26,9 @@ static void fill_data(char *buf, unsigned int size);
 static unsigned int get_rand_range(unsigned int min, unsigned int max);
 static int mem_allocation(char **buf, int reqSize);
 
-
+/* static varialbes */
 static wg_env *desc;
+
 
 void *workload_generator(void *arg)
 {
@@ -44,7 +46,8 @@ void *workload_generator(void *arg)
 	posed_time, 
 	start_time;
     unsigned long max_written_size = 0;
-    pthread_t tid;
+    //pthread_t tid;
+    unsigned int tid = 0;
 #ifdef ONLY_FOR_TEST
     int test_count=1;
 #endif
@@ -54,7 +57,10 @@ void *workload_generator(void *arg)
 	srand(time(NULL));
     }
     
-    tid = pthread_self();
+    //tid = pthread_self();
+    pthread_mutex_lock(&thr_mutex);
+    tid = shared_cnt++;
+    pthread_mutex_unlock(&thr_mutex);
 
     if( (fd = open(desc->file_path, O_CREAT|O_RDWR|O_DIRECT, 0666)) == -1){
     //if( (fd = open(desc->file_path, O_CREAT|O_RDWR, 0666)) == -1){
@@ -96,7 +102,7 @@ void *workload_generator(void *arg)
 #endif
 	fill_data(buf, size);
 
-	PRINT("tid:%lu %s %s Addr:%12lu \t Size:%12lu\n", 
+	PRINT("GENERATOR tid:%u %s %s Addr:%12lu \t Size:%12lu\n", 
 		tid,
 		(seq_rnd==WG_SEQ?"SEQ":"RND"),
 		(op==WG_READ?"READ ":"WRITE"), 
@@ -138,9 +144,11 @@ void *workload_generator(void *arg)
 	    gettimeofday(&current_time, NULL);
 	    if ( (TIME_VALUE(&current_time) - TIME_VALUE(&start_time)) >= \
 		    (desc->total_test_time * 1000ULL) )
+		//Go out!!
 		break;
 	} else if (desc->test_length_type == WG_NUMBER) {
 	    if (i >= (unsigned int)desc->total_test_req) 
+		//Go out!!
 		break;
 	} else {
 	    PRINT("Error on file:%s, line:%d", __func__, __LINE__);
@@ -158,6 +166,7 @@ void *workload_generator(void *arg)
 	    }
 	}
     }
+    pthread_mutex_destroy(&thr_mutex);
     close(fd);
     free(buf);
     PRINT("END OF WG\n");

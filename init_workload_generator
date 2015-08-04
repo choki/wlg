@@ -65,5 +65,5 @@ ALIGNMENT_UNIT 512
 # Make random number deterministically.
 # 	1 -> Deterministic
 # 	0 -> Non-deterministic
-RANDOM_DETERMINISTIC 1
+RANDOM_DETERMINISTIC 0
 

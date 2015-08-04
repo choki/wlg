@@ -10,6 +10,10 @@
 //#define GET_ALIGNED_VALUE(v) ((v)+SIZE_OF_SECTOR-1)/SIZE_OF_SECTOR*SIZE_OF_SECTOR
 #define GET_ALIGNED_VALUE(v) ((v)-((v)%SIZE_OF_SECTOR))
 
+/* extern variables */
+extern unsigned int shared_cnt;
+extern pthread_mutex_t thr_mutex;
+
 /* Types */
 typedef enum{
     WG_GENERATING_MODE,
@@ -100,7 +104,6 @@ typedef struct _wg_env {
 
 typedef struct _thread_info {
     pthread_t thr;
-    unsigned int thr_num;
 } thread_info;
 
 

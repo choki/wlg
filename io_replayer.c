@@ -16,8 +16,30 @@
 #include <sched.h>	//sched_affinity()
 #include "gio.h"
 #include "io_replayer.h"
+#include "io_replayer_queue.h"
 #include "common.h"
 
 void *workload_replayer(void *arg)
 {
+    unsigned int tid = 0;
+    readLine req;
+
+    pthread_mutex_lock(&thr_mutex);
+    tid = shared_cnt++;
+    pthread_mutex_unlock(&thr_mutex);
+
+    while(1){
+	req = de_queue(tid);
+	if(strcmp(req.rwbs, "EMPTY") != 0){
+	    PRINT("REPLAYER tid:%u %s Addr:%12li \t Size:%12d\n", 
+		    tid,
+		    req.rwbs,
+		    req.sSector,
+		    req.size);	
+	}
+	if( get_queue_status(tid) == 1 ){
+	    break;
+	}
+    }
+    pthread_mutex_destroy(&thr_mutex);
 }

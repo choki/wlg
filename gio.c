@@ -8,7 +8,7 @@
 #include <stdint.h> 	//uint64_t
 #include <errno.h>
 #include <string.h> 	//memcpy
-#include <stdbool.h>	//boolean
+#include <stdbool.h>	//bool
 #include <time.h>	//time()
 #include <signal.h>
 #include <unistd.h>
@@ -22,6 +22,9 @@
 
 /* Local Variables */
 static wg_env *setting;
+
+unsigned int shared_cnt = 0;
+pthread_mutex_t thr_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* Extern Functions */
 extern void *workload_replayer(void *arg);
@@ -118,7 +121,6 @@ void main(void)
     //thread related
     tinfo = malloc(setting->thread_num * sizeof(thread_info));
     for(i=0; i<setting->thread_num; i++){
-	tinfo[i].thr_num;
 
 	if(setting->test_mode == WG_GENERATING_MODE){
 	    tid = pthread_create(&tinfo[i].thr, NULL, &workload_generator, (void *)setting);
@@ -135,9 +137,9 @@ void main(void)
 	//Provid trace input to request queue in each thread.
 	trace_feeder();
 	//TODO for test
-	for(i=0; i<setting->thread_num; i++){
-	    print_queue(i);
-	}
+	//for(i=0; i<setting->thread_num; i++){
+	//    print_queue(i);
+	//}
     }
     for(i=0; i<setting->thread_num; i++){
 	tid = pthread_join(tinfo[i].thr, (void **)&status);
@@ -145,8 +147,7 @@ void main(void)
 	    PRINT("Error on thread join, line:%d, errno:%d\n", __LINE__, tid);
 	    exit(1);
 	}
-	PRINT("#%u Thread joined with status %d\n", tinfo[i].thr_num, status);
-	PRINT("1\n");
+	PRINT("Thread joined with status %d\n", status);
     }
     terminate_queue();
     if(setting->file_path)
@@ -181,6 +182,8 @@ static void trace_feeder(void)
 	    valid_cnt++;
 	}
     }
+    //PRINT("valid_cnt : %u\n", valid_cnt);
+    set_queue_status(1);
     fclose(fpR);
     free(line);
     free(tmp);
@@ -225,7 +228,7 @@ static void load_settings(void)
 	       	__func__, __LINE__);
 	exit(1);
     }
-
+    PRINT("\n################# \"SETTINGS\" #################\n");
     while (0 <= getline(&line, &len, filp)) {
 	found = false;
 
@@ -257,7 +260,7 @@ static void load_settings(void)
 	    }
 	}
     }
-
+    PRINT("##############################################\n\n");
     free(tmpChar);
     free(line);
     free(buf);
@@ -271,20 +274,20 @@ static void f_file_path(char *in)
 {
     setting->file_path = malloc(sizeof(char) * WG_STR_LENGTH);
     strncpy(setting->file_path, in, (int)strlen(in)+1);
-    PRINT("file path : %s\n", (char *)setting->file_path);
+    PRINT("file path : \t\t\t%s\n", (char *)setting->file_path);
 }
 static void f_test_mode(unsigned long in){
     setting->test_mode = (unsigned int)in;
-    PRINT("test mode : %u\n", (unsigned int)in);
+    PRINT("test mode : \t\t\t%s\n", (unsigned int)in?"REPLAY mode":"GENERATING mode");
 }
 static void f_thread_num(unsigned long in){
     setting->thread_num = (unsigned int)in;
-    PRINT("thread number : %u\n", (unsigned int)in);
+    PRINT("thread number : \t\t%u\n", (unsigned int)in);
 }
 static void f_test_interface_type(unsigned long in)
 {
     setting->test_interface_type = (unsigned int)in;
-    PRINT("test_interface_type : %u\n", (unsigned int)in);
+    PRINT("test_interface_type : \t\t%s\n", (unsigned int)in?"Block device":"Character device");
     if (setting->test_interface_type == WG_CHARDEV)
 	setting->interface_unit = 1;
     else
@@ -293,78 +296,78 @@ static void f_test_interface_type(unsigned long in)
 static void f_test_length_type(unsigned long in)
 {
     setting->test_length_type = (unsigned int)in;
-    PRINT("test_length_type : %u\n", (unsigned int)in);
+    PRINT("test_length_type : \t\t%s\n", (unsigned int)in?"# of requests":"Time duration");
 }
 static void f_total_test_req(unsigned long in)
 {
     setting->total_test_req = (unsigned long)in;
-    PRINT("total_test_req : %u\n", (unsigned int)in);
+    PRINT("total_test_req : \t\t%u\n", (unsigned int)in);
 }
 static void f_total_test_time(unsigned long in)
 {
     setting->total_test_time = (unsigned int)in;
-    PRINT("total_test_time : %u\n", (unsigned int)in);
+    PRINT("total_test_time : \t\t%u us\n", (unsigned int)in);
 }
 static void f_max_addr(unsigned long in)
 {
     setting->max_addr = in;
-    PRINT("max_addr : %lu\n", in);
+    PRINT("max_addr : \t\t\t%lu Bytes\n", in);
 }
 static void f_min_addr(unsigned long in)
 {
     setting->min_addr = in;
-    PRINT("min_addr : %lu\n", in);
+    PRINT("min_addr : \t\t\t%lu Bytes\n", in);
 }
 static void f_max_size(unsigned long in)
 {
     setting->max_size = in;
-    PRINT("max_size : %lu\n", in);
+    PRINT("max_size : \t\t\t%lu Bytes\n", in);
 }
 static void f_min_size(unsigned long in)
 {
     setting->min_size = in;
-    PRINT("min_size : %lu\n", in);
+    PRINT("min_size : \t\t\t%lu Bytes\n", in);
 }
 static void f_sequential_w(unsigned long in)
 {
     setting->sequential_w = (unsigned int)in;
-    PRINT("sequential_w : %u\n", (unsigned int)in);
+    PRINT("sequential_w : \t\t\t%u %%\n", (unsigned int)in);
 }
 static void f_nonsequential_w(unsigned long in)
 {
     setting->nonsequential_w = (unsigned int)in;
-    PRINT("nonsequential_w : %u\n", (unsigned int)in);
+    PRINT("nonsequential_w : \t\t%u %%\n", (unsigned int)in);
 }
 static void f_read_w(unsigned long in)
 {
     setting->read_w = (unsigned int)in;
-    PRINT("read_w : %u\n", (unsigned int)in);
+    PRINT("read_w : \t\t\t%u %%\n", (unsigned int)in);
 }
 static void f_write_w(unsigned long in)
 {
     setting->write_w = (unsigned int)in;
-    PRINT("write_w : %u\n", (unsigned int)in);
+    PRINT("write_w : \t\t\t%u %%\n", (unsigned int)in);
 }
 static void f_burstiness_number(unsigned long in){
     setting->burstiness_number = (unsigned int)in;
-    PRINT("burstiness_number : %u\n", (unsigned int)in);
+    PRINT("burstiness_number : \t\t%u\n", (unsigned int)in);
 }
 static void f_pose_time(unsigned long in)
 {
     setting->pose_time = (unsigned int)in;
-    PRINT("pose_time : %u\n", (unsigned int)in);
+    PRINT("pose_time : \t\t\t%u us\n", (unsigned int)in);
 }
 static void f_alignment(unsigned long in)
 {
     setting->alignment = (unsigned int)in;
-    PRINT("alignment : %u\n", (unsigned int)in);
+    PRINT("alignment : \t\t\t%s\n", (unsigned int)in?"No":"Yes");
 }
 static void f_alignment_unit(unsigned long in)
 {
     setting->alignment_unit = (unsigned int)in;
-    PRINT("alignment_unit : %u\n", (unsigned int)in);
+    PRINT("alignment_unit : \t\t%u Bytes\n", (unsigned int)in);
 }
 static void f_random_deterministic(unsigned long in){
     setting->rand_deterministic = (unsigned int)in;
-    PRINT("random deterministic : %u\n", (unsigned int)in);
+    PRINT("random deterministic : \t\t%s\n", (unsigned int)in?"Changing value":"Fixed value");
 }
