@@ -4,11 +4,6 @@
 //#define ONLY_FOR_TEST
 
 #define WG_STR_LENGTH   1024
-#define SIZE_OF_SECTOR 	512
-
-#define TIME_VALUE(t) ( ((t)->tv_sec)*1000000ULL+((t)->tv_usec) )
-//#define GET_ALIGNED_VALUE(v) ((v)+SIZE_OF_SECTOR-1)/SIZE_OF_SECTOR*SIZE_OF_SECTOR
-#define GET_ALIGNED_VALUE(v) ((v)-((v)%SIZE_OF_SECTOR))
 
 /* extern variables */
 extern unsigned int shared_cnt;

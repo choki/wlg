@@ -121,7 +121,6 @@ void main(void)
     //thread related
     tinfo = malloc(setting->thread_num * sizeof(thread_info));
     for(i=0; i<setting->thread_num; i++){
-
 	if(setting->test_mode == WG_GENERATING_MODE){
 	    tid = pthread_create(&tinfo[i].thr, NULL, &workload_generator, (void *)setting);
 	}else if(setting->test_mode == WG_REPLAY_MODE){
@@ -137,9 +136,9 @@ void main(void)
 	//Provid trace input to request queue in each thread.
 	trace_feeder();
 	//TODO for test
-	//for(i=0; i<setting->thread_num; i++){
-	//    print_queue(i);
-	//}
+	/*for(i=0; i<setting->thread_num; i++){
+	    print_queue(i);
+	}*/
     }
     for(i=0; i<setting->thread_num; i++){
 	tid = pthread_join(tinfo[i].thr, (void **)&status);
@@ -178,11 +177,17 @@ static void trace_feeder(void)
 	
 	//Only "D" action is eligible
 	if( strcmp(string.action,"D") == 0 ){
+	    if(valid_cnt == 0){
+		//Need to remember start time of very first request
+		set_start_time(string.sTime);
+	    }
 	    en_queue(valid_cnt%(setting->thread_num), string);
 	    valid_cnt++;
 	}
     }
+    PRINT("End of enqeueing\n");
     //PRINT("valid_cnt : %u\n", valid_cnt);
+    //Indicating that trace feed is finished
     set_queue_status(1);
     fclose(fpR);
     free(line);
@@ -306,7 +311,7 @@ static void f_total_test_req(unsigned long in)
 static void f_total_test_time(unsigned long in)
 {
     setting->total_test_time = (unsigned int)in;
-    PRINT("total_test_time : \t\t%u us\n", (unsigned int)in);
+    PRINT("total_test_time : \t\t%u ms\n", (unsigned int)in);
 }
 static void f_max_addr(unsigned long in)
 {
@@ -355,7 +360,7 @@ static void f_burstiness_number(unsigned long in){
 static void f_pose_time(unsigned long in)
 {
     setting->pose_time = (unsigned int)in;
-    PRINT("pose_time : \t\t\t%u us\n", (unsigned int)in);
+    PRINT("pose_time : \t\t\t%u ms\n", (unsigned int)in);
 }
 static void f_alignment(unsigned long in)
 {
@@ -369,5 +374,5 @@ static void f_alignment_unit(unsigned long in)
 }
 static void f_random_deterministic(unsigned long in){
     setting->rand_deterministic = (unsigned int)in;
-    PRINT("random deterministic : \t\t%s\n", (unsigned int)in?"Changing value":"Fixed value");
+    PRINT("random deterministic : \t\t%s\n", (unsigned int)in?"Fixed value":"Changing value");
 }

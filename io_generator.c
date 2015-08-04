@@ -4,7 +4,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>	//exit
-#include <sys/time.h>	//gettimeofday
 #include <stdint.h> 	//uint64_t
 #include <errno.h>
 #include <string.h> 	//memcpy
@@ -84,7 +83,7 @@ void *workload_generator(void *arg)
     size = 2048;
 #endif
     //usleep(50);
-    gettimeofday(&start_time, NULL);
+    get_current_time(&start_time);
 
     PRINT("\n");
     while (1) {
@@ -141,7 +140,7 @@ void *workload_generator(void *arg)
 	counter++;
 
 	if (desc->test_length_type == WG_TIME) {
-	    gettimeofday(&current_time, NULL);
+	    get_current_time(&current_time);
 	    if ( (TIME_VALUE(&current_time) - TIME_VALUE(&start_time)) >= \
 		    (desc->total_test_time * 1000ULL) )
 		//Go out!!
@@ -156,10 +155,10 @@ void *workload_generator(void *arg)
 
 	if (counter >= desc->burstiness_number) {
 	    counter = 0;
-	    gettimeofday(&posed_time, NULL);
+	    get_current_time(&posed_time);
 
 	    while (1) {
-		gettimeofday(&current_time, NULL);
+		get_current_time(&current_time);
 		if ( (TIME_VALUE(&current_time) - TIME_VALUE(&posed_time)) >= \
 			((long long)desc->pose_time * 1000ULL) )
 		    break;
@@ -169,7 +168,7 @@ void *workload_generator(void *arg)
     pthread_mutex_destroy(&thr_mutex);
     close(fd);
     free(buf);
-    PRINT("END OF WG\n");
+    PRINT("END OF GENERATOR\n");
 }
 
 /*  Functions for Workload Generation */

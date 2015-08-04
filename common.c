@@ -3,6 +3,7 @@
 #include <stdlib.h> //getline()
 #include <fcntl.h>
 #include <string.h> //strtok()
+#include <sys/time.h>	//gettimeofday
 #include "trace_parser.h"
 #include "common.h"
 
@@ -56,4 +57,9 @@ void parse_one_line(char *line, readLine *string)
       string->sSector,
       string->size);*/
     free(tmp);
+}
+
+void get_current_time(struct timeval *now)
+{
+    gettimeofday(now, NULL);
 }
