@@ -24,7 +24,7 @@ TEST_LENGTH 1
 
 # if TEST_LENGTH_TYPE is time, 
 # 	this value will be ignored
-TOTAL_TEST_REQUESTS 200
+TOTAL_TEST_REQUESTS 10
 
 # Unit of value is 'ms' & 
 # 	if TEST_LENGTH_TYPE is number of requests, 

@@ -78,7 +78,7 @@ void *workload_replayer(void *arg)
 	    if(trace_sTime == -1){
 		get_start_time(&trace_sTime, &gio_sTime); 
 	    }
-	    trace_wTime = MILLI_SECOND(req.sTime) - trace_sTime;
+	    trace_wTime = MICRO_SECOND(req.sTime) - trace_sTime;
 	    if(trace_wTime < 0){
 		PRINT("trace_wTime : %lli\n", trace_wTime);
 		PRINT("Issue time must be ordered. Check the issue time in trace file");

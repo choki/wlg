@@ -101,7 +101,7 @@ void set_start_time(double sTime)
 {
     struct timeval now;
     //Trace time
-    trace_start_time = MILLI_SECOND(sTime);
+    trace_start_time = MICRO_SECOND(sTime);
     //Replayer time
     get_current_time(&now);
     gio_start_time = TIME_VALUE(&now);

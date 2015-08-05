@@ -142,7 +142,7 @@ void *workload_generator(void *arg)
 	if (desc->test_length_type == WG_TIME) {
 	    get_current_time(&current_time);
 	    if ( (TIME_VALUE(&current_time) - TIME_VALUE(&start_time)) >= \
-		    (desc->total_test_time * 1000ULL) )
+		    MILLI_SECOND(desc->total_test_time) )
 		//Go out!!
 		break;
 	} else if (desc->test_length_type == WG_NUMBER) {
@@ -160,7 +160,7 @@ void *workload_generator(void *arg)
 	    while (1) {
 		get_current_time(&current_time);
 		if ( (TIME_VALUE(&current_time) - TIME_VALUE(&posed_time)) >= \
-			((long long)desc->pose_time * 1000ULL) )
+			MILLI_SECOND((long long)desc->pose_time) )
 		    break;
 	    }
 	}
