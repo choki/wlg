@@ -166,8 +166,11 @@ static void trace_feeder(void)
     readLine string;
     unsigned int valid_cnt = 0;
 
-    fpR = fopen("./user_trace", "r");
-
+    if( (fpR=fopen("./user_trace", "r")) == NULL ){
+	PRINT("Error on opening the \"trace\" file, file:%s, line:%d\n", \
+	       	__func__, __LINE__);
+	exit(1);
+    }
     line = malloc(sizeof(char)*MAX_STR_LEN);
     tmp = malloc(sizeof(char)*MAX_STR_LEN);
 
