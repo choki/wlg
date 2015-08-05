@@ -88,8 +88,8 @@ void *workload_replayer(void *arg)
 	    //Caculate how much time should wait
 	    get_current_time(&now);
 	    gio_wTime = TIME_VALUE(&now) - gio_sTime;
-	    PRINT("DEBUG tid:%u trace_wTime:%lli  gio_wTime:%lli\n",
-		    tid, trace_wTime, gio_wTime);
+	    PRINT("TIMEDEBUG trace_wTime:%10lli  \tgio_wTime:%10lli\n",
+		    trace_wTime, gio_wTime);
 
 	    //If we need to wait
 	    if(trace_wTime > gio_wTime){
@@ -98,11 +98,11 @@ void *workload_replayer(void *arg)
 	    }
 	    //Do request operation
 	    if(strstr(req.rwbs, "R") != NULL){
-		PRINT("R\n");
+		//PRINT("R\n");
 		lseek(fd, mAddr, SEEK_SET);
 		ret = read(fd, buf , (size_t)mSize);
 	    }else{
-		PRINT("W\n");
+		//PRINT("W\n");
 		lseek(fd, mAddr, SEEK_SET);
 		ret = write(fd, buf , (size_t)mSize);
 		fsync(fd);
@@ -112,13 +112,14 @@ void *workload_replayer(void *arg)
 		break;
 	    }
 	}
+	PRINT("DEQUEUED tid:%u sTime:%lf rwbs:%s Addr:%12li \t Size:%12lu\n\n", 
+		tid,
+		req.sTime,
+		req.rwbs,
+		mAddr,
+		mSize);	
 
-	PRINT("REPLAYER tid:%u sTime:%lf rwbs:%s Addr:%12li \t Size:%12lu\n\n", 
-		    tid,
-		    req.sTime,
-		    req.rwbs,
-		    mAddr,
-		    mSize);	
+
 	if( get_queue_status(tid) == 1 ){
 	    PRINT("END OF REPLAYER\n");
 	    break;
@@ -131,7 +132,7 @@ static unsigned long select_start_addr(unsigned long org_addr)
 {
     unsigned long modify_addr = org_addr;
 
-    if(desc->alignment == 1){
+    if(desc->alignment == 1 && org_addr%desc->alignment_unit!=0){
 	modify_addr = GET_ALIGNED_VALUE(org_addr);
 	PRINT("Start address changed: from:%lu to:%lu\n",org_addr, modify_addr);
     }
@@ -142,7 +143,7 @@ static unsigned long select_size(unsigned long org_size)
 {
     unsigned long modify_size = org_size;
 
-    if(desc->alignment == 1){
+    if(desc->alignment == 1 && org_size%desc->alignment_unit!=0){
 	modify_size = GET_ALIGNED_VALUE(org_size);
 	//the smallest size is 512Byte
 	if(modify_size == 0)

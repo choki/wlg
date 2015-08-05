@@ -166,7 +166,7 @@ static void trace_feeder(void)
     readLine string;
     unsigned int valid_cnt = 0;
 
-    fpR = fopen("./trace", "r");
+    fpR = fopen("./user_trace", "r");
 
     line = malloc(sizeof(char)*MAX_STR_LEN);
     tmp = malloc(sizeof(char)*MAX_STR_LEN);
