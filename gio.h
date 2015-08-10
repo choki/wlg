@@ -48,6 +48,7 @@ typedef enum {
     ALIGNMENT,		    
     ALIGNMENT_UNIT,	    
     RANDOM_DETERMINISTIC,
+    MAX_QUEUE_DEPTH,
     NUM_WG_PARAMETER_NUM,   
 }WG_PARAMETER_NUM;
 
@@ -95,6 +96,8 @@ typedef struct _wg_env {
     unsigned int test_length_type;
     unsigned int total_test_time;
     unsigned int rand_deterministic;
+
+    unsigned int max_queue_depth;
 } wg_env;
 
 typedef struct _thread_info {

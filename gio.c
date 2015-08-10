@@ -53,6 +53,7 @@ static void f_pose_time(unsigned long in);
 static void f_alignment(unsigned long in);
 static void f_alignment_unit(unsigned long in);
 static void f_random_deterministic(unsigned long in);
+static void f_max_queue_depth(unsigned long in);
 
 /* Local Arrays For Initialization */
 static char wg_param_num[NUM_WG_PARAMETER_NUM][255] = { 
@@ -74,7 +75,8 @@ static char wg_param_num[NUM_WG_PARAMETER_NUM][255] = {
     "POSE_TIME",			
     "ALIGNMENT",			
     "ALIGNMENT_UNIT",			
-    "RANDOM_DETERMINISTIC"
+    "RANDOM_DETERMINISTIC",
+    "MAX_QUEUE_DEPTH",
 };
 
 static char wg_param_str[NUM_WG_PARAMETER_STR][255] = { 
@@ -100,7 +102,8 @@ static void (*wg_param_num_cmd[NUM_WG_PARAMETER_NUM])(unsigned long) = {
     f_pose_time,		
     f_alignment,		
     f_alignment_unit,		
-    f_random_deterministic	
+    f_random_deterministic,
+    f_max_queue_depth    
 };
 
 static void (*wg_param_str_cmd[NUM_WG_PARAMETER_STR])(char *) = { 
@@ -378,4 +381,8 @@ static void f_alignment_unit(unsigned long in)
 static void f_random_deterministic(unsigned long in){
     setting->rand_deterministic = (unsigned int)in;
     PRINT("random deterministic : \t\t%s\n", (unsigned int)in?"Fixed value":"Changing value");
+}
+static void f_max_queue_depth(unsigned long in){
+    setting->max_queue_depth = (unsigned int)in;
+    PRINT("Max queue depth : \t\t%u\n", (unsigned int)in);
 }

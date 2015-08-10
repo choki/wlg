@@ -13,7 +13,10 @@ FILE_PATH /dev/sda1
 TEST_MODE 0
 
 # Number of thread that will produce I/O request in parallel manner
-THREAD_NUM 10
+THREAD_NUM 2
+
+# Number of queue depth
+MAX_QUEUE_DEPTH 3
 
 # 	0 -> Character Device (Unit : byte) 
 # 	1 -> Block Device (Unit : Sector)
@@ -26,7 +29,7 @@ TEST_LENGTH 1
 
 # if TEST_LENGTH_TYPE is time, 
 # 	this value will be ignored
-TOTAL_TEST_REQUESTS 100
+TOTAL_TEST_REQUESTS 3
 
 # Unit of value is 'ms' & 
 # 	if TEST_LENGTH_TYPE is number of requests, 
@@ -67,5 +70,4 @@ ALIGNMENT_UNIT 512
 # Make random number deterministically.
 # 	1 -> Deterministic
 # 	0 -> Non-deterministic
-RANDOM_DETERMINISTIC 0
-
+RANDOM_DETERMINISTIC 1
