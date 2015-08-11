@@ -10,11 +10,11 @@ FILE_PATH /dev/sda1
 # 	Most of user settings will be ignored.
 # WARNING : 
 # 	Set "THREAD_NUM" to "1' for timing accuracy, when testing with "Replay mode".
-TEST_MODE 1
+TEST_MODE 0
 
 	# Number of thread that will produce I/O request in parallel manner
 	# Only valid in "generating" mode
-	THREAD_NUM 1
+	THREAD_NUM 5
 
 	# Number of queue depth (Asynchronous I/O)
 	# Only valid in "replay" mode

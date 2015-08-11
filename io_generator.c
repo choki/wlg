@@ -51,6 +51,9 @@ void *workload_generator(void *arg)
 #ifdef ONLY_FOR_TEST
     int test_count=1;
 #endif
+    //io tracer related
+    unsigned long long trace_time;
+    char trace_line[MAX_STR_LEN] = {0};
 
     desc = (wg_env *)arg;
     if(desc->rand_deterministic == 0){
@@ -109,6 +112,14 @@ void *workload_generator(void *arg)
 		(op==WG_READ?"READ ":"WRITE"), 
 		start_addr, 
 		size);
+
+    	pthread_mutex_lock(&thr_mutex);
+	get_current_time(&current_time);
+	trace_time = TIME_VALUE(&current_time);
+	sprintf(trace_line, "%u,%llu,%s,%s,%lu,%lu", 
+		tid, trace_time, (op==WG_READ?"R":"W"), "D", start_addr, size);
+	tracer_add(trace_line);
+	pthread_mutex_unlock(&thr_mutex);
 
 	//ret = aio_enqueue(fd, buf, size, start_addr, op);
 

@@ -18,6 +18,7 @@
 #include "io_generator.h"
 #include "io_replayer.h"
 #include "io_replayer_queue.h"
+#include "io_tracer.h"
 #include "common.h"
 
 /* Local Variables */
@@ -117,9 +118,14 @@ void main(void)
     thread_info *tinfo;
      int tid;
      int status;
+    pthread_t trace_thr;
 
     //load user initial settings
     load_settings();
+
+    if(setting->test_mode == WG_GENERATING_MODE){
+	tracer_initialize();
+    }
 
     //thread related
     tinfo = malloc(setting->thread_num * sizeof(thread_info));
@@ -128,6 +134,8 @@ void main(void)
 	    tid = pthread_create(&tinfo[i].thr, NULL, &workload_generator, (void *)setting);
 	}else if(setting->test_mode == WG_REPLAY_MODE){
 	    tid = pthread_create(&tinfo[i].thr, NULL, &workload_replayer, (void *)setting);
+	    //Repalyer only works in a single thread.
+	    break;
 	}
 	if(tid < 0){
 	    PRINT("Error on thread creation, line:%d, errno:%d\n", __LINE__, tid);
@@ -151,6 +159,8 @@ void main(void)
 	}
 	PRINT("Thread joined with status %d\n", status);
     }
+    PRINT("$$$$$$\n");
+    tracer_save_file();
     terminate_queue();
     if(setting->file_path)
 	free(setting->file_path);
