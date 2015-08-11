@@ -169,7 +169,7 @@ static void trace_feeder(void)
     readLine string;
     unsigned int valid_cnt = 0;
 
-    if( (fpR=fopen("./user_trace", "r")) == NULL ){
+    if( (fpR=fopen("./trace", "r")) == NULL ){
 	PRINT("Error on opening the \"trace\" file, file:%s, line:%d\n", \
 	       	__func__, __LINE__);
 	exit(1);

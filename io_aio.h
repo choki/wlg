@@ -17,5 +17,6 @@ int aio_enqueue(
 	OPERATION_TYPE op
 	);
 void aio_termination(void);
+int get_aio_status(void);
 
 #endif //__IO_AIO_H__

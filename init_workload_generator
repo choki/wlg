@@ -10,32 +10,32 @@ FILE_PATH /dev/sda1
 # 	Most of user settings will be ignored.
 # WARNING : 
 # 	Set "THREAD_NUM" to "1' for timing accuracy, when testing with "Replay mode".
-TEST_MODE 0
+TEST_MODE 1
 
-# Number of thread that will produce I/O request in parallel manner
-THREAD_NUM 2
+	# Number of thread that will produce I/O request in parallel manner
+	# Only valid in "generating" mode
+	THREAD_NUM 1
 
-# Number of queue depth
-MAX_QUEUE_DEPTH 3
-
-# 	0 -> Character Device (Unit : byte) 
-# 	1 -> Block Device (Unit : Sector)
-TEST_INTERFACE 0
-
+	# Number of queue depth (Asynchronous I/O)
+	# Only valid in "replay" mode
+	MAX_QUEUE_DEPTH 32
 
 # 0 -> Time, 
 # 1 -> Number of Requests
 TEST_LENGTH 1
 
-# if TEST_LENGTH_TYPE is time, 
-# 	this value will be ignored
-TOTAL_TEST_REQUESTS 3
+	# if TEST_LENGTH_TYPE is time, 
+	# 	this value will be ignored
+	TOTAL_TEST_REQUESTS 5
 
-# Unit of value is 'ms' & 
-# 	if TEST_LENGTH_TYPE is number of requests, 
-# this value will be ignored
-TOTAL_TEST_TIME 100000
+	# Unit of value is 'ms' & 
+	# 	if TEST_LENGTH_TYPE is number of requests, 
+	# this value will be ignored
+	TOTAL_TEST_TIME 100000
 
+# 0 -> Character Device (Unit : byte) 
+# 1 -> Block Device (Unit : Sector)
+TEST_INTERFACE 0
 
 # Unit of test address and size is 'byte'
 MAX_ADDRESS 1000000000
@@ -64,8 +64,8 @@ POSE_TIME 0
 # 	1 -> ON
 ALIGNMENT 1 
 
-# Unit is byte
-ALIGNMENT_UNIT 512
+	# Unit is byte
+	ALIGNMENT_UNIT 512
 
 # Make random number deterministically.
 # 	1 -> Deterministic

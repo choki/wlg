@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <sched.h>	//sched_affinity()
 #include <pthread.h>
-#include <libaio.h>
+//#include <libaio.h>
 #include "gio.h"
 #include "common.h"
 
@@ -67,7 +67,7 @@ void *workload_generator(void *arg)
 	PRINT("Error on opening the init_file of workload generator, file:%s, line:%d, fd=%d\n", __func__, __LINE__, fd);
 	exit(1);
     }
-    aio_initialize(desc->max_queue_depth);
+    //aio_initialize(desc->max_queue_depth);
     mem_allocation( &buf, (desc->max_size)*(desc->interface_unit) * desc->max_queue_depth );
     if (NULL == buf) {
 	PRINT("Error on memory allocation, file:%s, line:%d\n", __func__, __LINE__);
@@ -110,11 +110,8 @@ void *workload_generator(void *arg)
 		start_addr, 
 		size);
 
-	//TODO find free qid
-	ret = aio_enqueue(fd, buf, size, start_addr, op);
-	//TODO set qid busy
+	//ret = aio_enqueue(fd, buf, size, start_addr, op);
 
-	/*
 	switch (op){
 	    case WG_READ:
 		lseek(fd, start_addr, SEEK_SET);
@@ -134,7 +131,6 @@ void *workload_generator(void *arg)
 		PRINT("Error on file:%s, line:%d\n", __func__, __LINE__);
 		exit(1);
 	}
-	*/
 	if(op == WG_WRITE){
 	    if(max_written_size < start_addr + size){
 		max_written_size = start_addr + size;
@@ -145,7 +141,8 @@ void *workload_generator(void *arg)
 	// For sequentiality control
 	prior_end_addr = start_addr + size;
 
-	if (ret != 1) {
+	if (ret != size) {
+	//if (ret != 1) {
 	    PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
 	    break;
 	}
@@ -162,9 +159,7 @@ void *workload_generator(void *arg)
 	} else if (desc->test_length_type == WG_NUMBER) {
 	    if (i >= (unsigned int)desc->total_test_req) 
 		//Go out!!
-		//break;
-		//TODO
-		while(1){};
+		break;
 	} else {
 	    PRINT("Error on file:%s, line:%d", __func__, __LINE__);
 	}
@@ -182,8 +177,6 @@ void *workload_generator(void *arg)
 	}
     }
     pthread_mutex_destroy(&thr_mutex);
-    //TODO
-    //aio_termination();
     close(fd);
     free(buf);
     PRINT("END OF GENERATOR\n");

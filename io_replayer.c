@@ -13,10 +13,12 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sched.h>	//sched_affinity()
+#include <libaio.h>
 #include "gio.h"
 #include "io_replayer.h"
 #include "io_replayer_queue.h"
 #include "common.h"
+#include "io_aio.h"
 
 /* static varialbes */
 static wg_env *desc;
@@ -44,6 +46,7 @@ void *workload_replayer(void *arg)
     size_t ret;
     unsigned long mSize;
     unsigned long mAddr;
+    OPERATION_TYPE op;
 
 
     desc = (wg_env *)arg;
@@ -57,6 +60,11 @@ void *workload_replayer(void *arg)
 	PRINT("Error on opening the init_file of workload generator, file:%s, line:%d, fd=%d\n", __func__, __LINE__, fd);
 	exit(1);
     }
+
+#if !defined(BLOCKING_IO)
+    aio_initialize(desc->max_queue_depth);
+#endif
+
     mem_allocation( &buf, REPLAYER_MAX_FILE_SIZE );
     if (NULL == buf) {
 	PRINT("Error on memory allocation, file:%s, line:%d\n", __func__, __LINE__);
@@ -96,6 +104,7 @@ void *workload_replayer(void *arg)
 		PRINT("WAITING ....%lli us\n", trace_wTime - gio_wTime);
 		usec_sleep(trace_wTime - gio_wTime);
 	    }
+#if defined(BLOCKING_IO)
 	    //Do request operation
 	    if(strstr(req.rwbs, "R") != NULL){
 		//PRINT("R\n");
@@ -107,18 +116,26 @@ void *workload_replayer(void *arg)
 		ret = write(fd, buf , (size_t)mSize);
 		fsync(fd);
 	    }
-	    if (ret != mSize) {
+	    if (ret != mSize) {*/
 		PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
 		break;
 	    }
-	}
-	PRINT("DEQUEUED tid:%u sTime:%lf rwbs:%s Addr:%12li \t Size:%12lu\n\n", 
-		tid,
-		req.sTime,
-		req.rwbs,
-		mAddr,
-		mSize);	
+#else
+	    op = strstr(req.rwbs,"R")!=NULL? WG_READ : WG_WRITE;
 
+    	    ret = aio_enqueue(fd, buf, mSize, mAddr, op);
+	    if (ret != 1) {
+		PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
+		break;
+	    }
+#endif //BLOCKING_IO
+	    PRINT("DEQUEUED REQ tid:%u sTime:%lf rwbs:%s Addr:%12li \t Size:%12lu\n\n", 
+		    tid,
+		    req.sTime,
+		    req.rwbs,
+		    mAddr,
+		    mSize);	
+    }
 
 	if( get_queue_status(tid) == 1 ){
 	    PRINT("END OF REPLAYER\n");

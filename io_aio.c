@@ -17,19 +17,21 @@
 #include "common.h"
 #include "io_aio.h"
 
-static pthread_t thr;
-static unsigned long status_mask = 0;
-static int last_used_id = 0;
-static my_iocb my_iocbp[MAX_QUEUE_DEPTH]={0};
-static unsigned int max_depth;
-static io_context_t context;
+static 			pthread_t thr;
+static unsigned long 	status_mask = 0;		//Status mask indicating which iocb is used
+static int 		last_used_id = 0;		//Queue id that will be used in next turn
+static my_iocb 		my_iocbp[MAX_QUEUE_DEPTH]={0};
+static unsigned int 	max_depth;			//User setting max queue depth
+static io_context_t 	context;
+static 			req_num = 0;			//To check request processing is done or not
 
 /* Static funstions */
-static void *aio_dequeue(void *arg);
-static int find_and_set_id(void);
-static void clear_id(int id);
+static void *	aio_dequeue(void *arg);
+static int 	find_and_set_id(void);
+static void 	clear_id(int id);
 
-pthread_mutex_t aio_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t aio_status_mask_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t aio_req_num_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int aio_initialize(unsigned int max_queue_depth)
 {
@@ -37,7 +39,6 @@ int aio_initialize(unsigned int max_queue_depth)
     max_depth = max_queue_depth;
     int i;
 
-    pthread_mutex_lock(&aio_mutex);
     rtn = io_setup(125, &context);
     if(rtn<0){
 	PRINT("Error on setup I/O, file:%s, line:%d, errno=%d\n", __func__, __LINE__, rtn);
@@ -48,7 +49,6 @@ int aio_initialize(unsigned int max_queue_depth)
 	PRINT("Error on thread creation, line:%d, errno:%d\n", __LINE__, rtn);
 	exit(1);
     }
-    pthread_mutex_unlock(&aio_mutex);
 }
 
 int aio_enqueue(
@@ -91,22 +91,26 @@ retry:
 	PRINT("Error on I/O submission, line:%d, errno:%d\n", __LINE__, rtn);
 	exit(1);
     }
-    //TODO
-    //usleep(500);
+    pthread_mutex_lock(&aio_req_num_mutex);
+    req_num++;
+    pthread_mutex_unlock(&aio_req_num_mutex);
     return rtn;
 }
 
 void aio_termination(void)
 {
     int rtn;
-    
-    //free(my_iocbp);
 
     rtn = io_destroy(context);
     if(rtn<0){
 	PRINT("Error on io_destory:%s, line:%d\n", __func__, __LINE__);
 	exit(1);
     }
+}
+
+int get_aio_status(void)
+{
+    return req_num;
 }
 
 /* Static functions */
@@ -132,8 +136,11 @@ static void *aio_dequeue(void *arg)
 	}
 	else{
 	    cbp = (my_iocb *)event.obj;
-	    PRINT("\nDequeued qid:%d\n", cbp->qid);
+	    PRINT("\tFinished qid:%d\n", cbp->qid);
 	    clear_id(cbp->qid);
+	    pthread_mutex_lock(&aio_req_num_mutex);
+	    req_num--;
+	    pthread_mutex_unlock(&aio_req_num_mutex);
 	}
     }
 }
@@ -144,7 +151,7 @@ static int find_and_set_id(void)
     char bit;
     int chk_bit;
 
-    pthread_mutex_lock(&aio_mutex);
+    pthread_mutex_lock(&aio_status_mask_mutex);
     for(i=0; i<max_depth; i++){
 	chk_bit = last_used_id +i;
 	if(chk_bit >= max_depth){
@@ -163,20 +170,20 @@ static int find_and_set_id(void)
 		last_used_id %= max_depth;
 	    }
 	    //PRINT("Next id=%d\n", last_used_id);
-	    pthread_mutex_unlock(&aio_mutex);
+	    pthread_mutex_unlock(&aio_status_mask_mutex);
 	    return chk_bit;
 	}
     }
     //All queues are in busy.
     //PRINT("Fail to find empty id\n");
-    pthread_mutex_unlock(&aio_mutex);
+    pthread_mutex_unlock(&aio_status_mask_mutex);
     return -1;
 }
 
 static void clear_id(int id)
 {
-    pthread_mutex_lock(&aio_mutex);
+    pthread_mutex_lock(&aio_status_mask_mutex);
     status_mask &= ~(1<<id);
     //PRINT("CLEAR status_mask:%08lx, id:%d\n", status_mask, id);
-    pthread_mutex_unlock(&aio_mutex);
+    pthread_mutex_unlock(&aio_status_mask_mutex);
 }

@@ -90,8 +90,10 @@ void set_queue_status(int value)
 
 int get_queue_status(int thread_id)
 {
-    //"Feeder is done" && "Queue is empty" == No more job
-    if(file_read_finished && (r_queue[thread_id].num_node == 0))
+    //"Feeder is done" && "Queue is empty" == No more job && aio request ack is all received
+    if(file_read_finished && 
+	    (r_queue[thread_id].num_node == 0) && 
+	    !get_aio_status())
 	return 1;
     else
 	return 0;
