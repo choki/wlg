@@ -8,7 +8,7 @@ FILE_PATH /dev/sda1
 # 1 -> Replay mode
 # 	Workload will be replayed accroding to the "TRACE_INPUT_FILE_NAME" file.
 # 	Most of user settings will be ignored.
-TEST_MODE 0
+TEST_MODE 1
 
 # Number of thread that will produce I/O request in parallel manner
 # Only valid in "generating" mode because of timing accuracy problem in "replay" mode.

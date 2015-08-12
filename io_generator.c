@@ -113,7 +113,7 @@ void *workload_generator(void *arg)
 
     	pthread_mutex_lock(&thr_mutex);
 	get_current_time(&current_time);
-	sprintf(trace_line, "%u,%li.%li,%s,%s,%lu,%lu", 
+	sprintf(trace_line, "%u,%li.%06li,%s,%s,%lu,%lu", 
 		tid, current_time.tv_sec, current_time.tv_usec, (op==WG_READ?"R":"W"), "D", start_addr, size);
 	tracer_add(trace_line);
 	pthread_mutex_unlock(&thr_mutex);

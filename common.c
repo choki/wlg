@@ -90,7 +90,14 @@ int mem_allocation(wg_env *desc, char **buf, int reqSize)
 }
 void get_current_time(struct timeval *now)
 {
-    gettimeofday(now, NULL);
+    struct timespec ts;
+
+    if(clock_gettime(1, &ts) < 0){
+	now->tv_sec = ts.tv_sec;
+	now->tv_usec = ts.tv_nsec/1000;
+    }else{
+    	gettimeofday(now, NULL);
+    }
 }
 void usec_sleep(long long usec)
 {

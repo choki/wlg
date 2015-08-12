@@ -9,8 +9,8 @@
 #define MAX_STR_LEN 1024
 #define DEBUG_MODE
 #define TIME_VALUE(t) ( ((t)->tv_sec)*1000000ULL+((t)->tv_usec) )
-#define MICRO_SECOND(sec) (sec)*1000000ULL
-#define MILLI_SECOND(sec) (sec)*1000ULL
+#define MICRO_SECOND(sec) 	(sec)*1000000ULL
+#define MILLI_SECOND(sec) 	(sec)*1000ULL
 #define SIZE_OF_SECTOR 	512
 #define NOP __asm__ __volatile__("rep;nop": : :"memory")
 

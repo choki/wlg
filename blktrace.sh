@@ -8,7 +8,7 @@ then
 elif [ "$1" = "blkparse" ]
 then
 	echo "blkparsing...."
-	sudo blkparse -i trace.blktrace.0 -f "%2c,%T.%t,%d,%a,%S,%n\n" -o trace
+	sudo blkparse -i trace.blktrace.0 -f "%2c,%T.%t,%d,%a,%S,%n\n" -o trace.blkparse
 	echo "Parsing Done"
 else
 	echo "CMD : "
