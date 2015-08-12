@@ -4,6 +4,7 @@
 #include "gio.h"
 #define USER_SETTING_FILE_NAME "./settings"
 #define TRACE_INPUT_FILE_NAME "./trace"
+#define PARSER_INPUT_FILE_NAME "./trace.blkparse"
 #define PARSER_OUTPUT_FILE_NAME "./trace_p"
 #define TRACER_OUPUT_FILE_NAME "./trace"
 #define MAX_STR_LEN 1024

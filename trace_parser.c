@@ -21,9 +21,11 @@ void main(void)
     readLine string2;
     bool find = false;
     int i = 0;
+    int cur_bytes = 0;
+    int total_count = 0;
 
-    fpR1 = fopen(TRACE_INPUT_FILE_NAME, "r");
-    fpR2 = fopen(TRACE_INPUT_FILE_NAME, "r");
+    fpR1 = fopen(PARSER_INPUT_FILE_NAME, "r");
+    fpR2 = fopen(PARSER_INPUT_FILE_NAME, "r");
     fpW = fopen(PARSER_OUTPUT_FILE_NAME, "w+");
 
     line1 = malloc(sizeof(char)*MAX_STR_LEN);
@@ -31,6 +33,8 @@ void main(void)
     tmp = malloc(sizeof(char)*MAX_STR_LEN);
 
     while( getline(&line1, &len, fpR1) != -1 ){
+	cur_bytes = ftell(fpR1);
+	
 	//Parsing
 	parse_one_line(line1, &string1);
 	
@@ -43,44 +47,50 @@ void main(void)
 		//Succeed to find
 		if( string1.sSector == string2.sSector && \
 			strcmp(string2.action,"C") == 0 ){
-		    printf("Succeed\n");
-		    printf("line1:%s", line1);
-		    printf("line2:%s", line2);
+		    PRINT("Succeed\n");
+		    PRINT("line1:%s", line1);
+		    PRINT("line2:%s", line2);
 		    find = true;
 		    break;
 		}
 	    }//End of while()
 	    //Fail to find
 	    if(find == false){
-		printf("Fail\n");
-		printf("line1:%s", line1);
+		PRINT("Fail\n");
+		PRINT("line1:%s", line1);
 	    }
 	    //Write back
 	    line1[strlen(line1)-1] = '\0';
 	    if(find == true){
 		sprintf(tmp, "%s,%lf\n", line1, string2.sTime - string1.sTime);
 		//Array update
-		sum[string2.size/8].total += string2.sTime - string1.sTime;
-		sum[string2.size/8].count ++;
+		sum[string2.size].total += string2.sTime - string1.sTime;
+		sum[string2.size].count ++;
 	    }else{
 		sprintf(tmp, "%s,%s\n", line1, "Error");
 	    }
-	    printf("%s\n", tmp);
+	    PRINT("%s\n", tmp);
 	    fwrite(tmp, 1, strlen(tmp)+1, fpW);
 	    //Re-initialize
 	    find = false;
-	    fseek(fpR2, 0, SEEK_SET);
+	    fseek(fpR2, cur_bytes, SEEK_SET);
 	} //End of if()
     } //End of while()
-    printf("\nThe END\n");
+    PRINT("\nThe END\n");
     
     //Print summary
-    printf("sum = Total / Count\n");
+    PRINT("sum = Total / Count = Average latency\n");
     for(i=0; i<=SECTOR_ARRAY_SIZE; i++){
-	if(sum[i].count != 0){ 
-	    printf("%dKB = %lf/%d = %lf\n", i*8, sum[i].total, sum[i].count, sum[i].total/sum[i].count);
+	total_count += sum[i].count;
+
+	if(sum[i].count == 0){ 
+	    continue;
+	}else{
+	    PRINT("%d Sectors = %lf/%d = %lf\n", 
+		    i, sum[i].total, sum[i].count, sum[i].total/sum[i].count);
 	}
     }
+    PRINT("Total count = %d\n", total_count);
     fclose(fpR1);
     fclose(fpR2);
     fclose(fpW);

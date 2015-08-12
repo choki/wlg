@@ -1,7 +1,8 @@
 #ifndef __TRACE_PARSER_H__
 #define __TRACE_PARSER_H__
 
-#define SECTOR_ARRAY_SIZE 128
+//Maximum blktrace sector size is 1024
+#define SECTOR_ARRAY_SIZE 1024
 
 typedef struct _summary{
     double 	total;
