@@ -1,9 +1,6 @@
 #ifndef __GIO_H__
 #define __GIO_H__
 
-//#define ONLY_FOR_TEST
-
-#define WG_STR_LENGTH   1024
 
 /* extern variables */
 extern unsigned int shared_cnt;

@@ -179,7 +179,7 @@ static void trace_feeder(void)
     readLine string;
     unsigned int valid_cnt = 0;
 
-    if( (fpR=fopen("./trace", "r")) == NULL ){
+    if( (fpR=fopen(TRACE_INPUT_FILE_NAME, "r")) == NULL ){
 	PRINT("Error on opening the \"trace\" file, file:%s, line:%d\n", \
 	       	__func__, __LINE__);
 	exit(1);
@@ -214,7 +214,6 @@ static void load_settings(void)
 {
     FILE *filp = NULL;
     size_t len = 0;
-    char *buf;
     char *tmp;
     char *line;
     int i;
@@ -237,14 +236,12 @@ static void load_settings(void)
 	exit(1);
     }*/
     
-    tmpChar = malloc(sizeof(char) * WG_STR_LENGTH);
-    line = malloc(sizeof(char) * WG_STR_LENGTH);
-    buf = malloc(sizeof(char) * WG_STR_LENGTH);
-    tmp = malloc(sizeof(char) * WG_STR_LENGTH);
+    tmpChar = malloc(sizeof(char) * MAX_STR_LEN);
+    line = malloc(sizeof(char) * MAX_STR_LEN);
+    tmp = malloc(sizeof(char) * MAX_STR_LEN);
     setting = malloc(sizeof(wg_env));
 
-    sprintf(buf, "%s%s", "./", "init_workload_generator");
-    if( (filp = fopen(buf, "rw")) == NULL){
+    if( (filp = fopen(USER_SETTING_FILE_NAME, "rw")) == NULL){
 	PRINT("Error on opening the init_file of workload generator, file:%s, line:%d\n", \
 	       	__func__, __LINE__);
 	exit(1);
@@ -284,7 +281,6 @@ static void load_settings(void)
     PRINT("##############################################\n\n");
     free(tmpChar);
     free(line);
-    free(buf);
     free(tmp);
     fclose(filp);
 
@@ -293,7 +289,7 @@ static void load_settings(void)
 /* Functions for Initialization */
 static void f_file_path(char *in)
 {
-    setting->file_path = malloc(sizeof(char) * WG_STR_LENGTH);
+    setting->file_path = malloc(sizeof(char) * MAX_STR_LEN);
     strncpy(setting->file_path, in, (int)strlen(in)+1);
     PRINT("file path : \t\t\t%s\n", (char *)setting->file_path);
 }

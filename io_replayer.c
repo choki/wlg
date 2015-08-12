@@ -26,10 +26,6 @@ static wg_env *desc;
 /* Static Functions */
 static unsigned long select_start_addr(unsigned long org_addr);
 static unsigned long select_size(unsigned long org_size);
-static void fill_data(char *buf, unsigned int size);
-static int mem_allocation(char **buf, int reqSize);
-void usec_sleep(long long usec);
-long long usec_elapsed(struct timeval start);
 
 
 void *workload_replayer(void *arg)
@@ -55,8 +51,8 @@ void *workload_replayer(void *arg)
     tid = shared_cnt++;
     pthread_mutex_unlock(&thr_mutex);
 
-    //if( (fd = open(desc->file_path, O_CREAT|O_RDWR|O_DIRECT, 0666)) == -1){
-    if( (fd = open(desc->file_path, O_CREAT|O_RDWR, 0666)) == -1){
+    if( (fd = open(desc->file_path, O_CREAT|O_RDWR|O_DIRECT, 0666)) == -1 ){
+    //if( (fd = open(desc->file_path, O_CREAT|O_RDWR, 0666)) == -1){
 	PRINT("Error on opening the init_file of workload generator, file:%s, line:%d, fd=%d\n", __func__, __LINE__, fd);
 	exit(1);
     }
@@ -65,7 +61,7 @@ void *workload_replayer(void *arg)
     aio_initialize(desc->max_queue_depth);
 #endif
 
-    mem_allocation( &buf, REPLAYER_MAX_FILE_SIZE );
+    mem_allocation(desc, &buf, REPLAYER_MAX_FILE_SIZE);
     if (NULL == buf) {
 	PRINT("Error on memory allocation, file:%s, line:%d\n", __func__, __LINE__);
 	exit(1);
@@ -80,7 +76,7 @@ void *workload_replayer(void *arg)
 
 	    mSize = select_size(req.size);
 	    mAddr = select_start_addr(req.sSector);
-	    fill_data(buf, mSize);
+	    fill_data(desc, buf, mSize);
 
 	    //Calculate wait time based on trace log
 	    if(trace_sTime == -1){
@@ -104,24 +100,21 @@ void *workload_replayer(void *arg)
 		PRINT("WAITING ....%lli us\n", trace_wTime - gio_wTime);
 		usec_sleep(trace_wTime - gio_wTime);
 	    }
+	    op = strstr(req.rwbs,"R")!=NULL? WG_READ : WG_WRITE;
 #if defined(BLOCKING_IO)
-	    //Do request operation
-	    if(strstr(req.rwbs, "R") != NULL){
+	    if(op == WG_READ){
 		//PRINT("R\n");
-		lseek(fd, mAddr, SEEK_SET);
-		ret = read(fd, buf , (size_t)mSize);
+		ret = pread(fd, buf , (size_t)mSize, mAddr);
 	    }else{
 		//PRINT("W\n");
-		lseek(fd, mAddr, SEEK_SET);
-		ret = write(fd, buf , (size_t)mSize);
+		ret = pwrite(fd, buf , (size_t)mSize, mAddr);
 		fsync(fd);
 	    }
-	    if (ret != mSize) {*/
+	    if (ret != mSize) {
 		PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
 		break;
 	    }
 #else
-	    op = strstr(req.rwbs,"R")!=NULL? WG_READ : WG_WRITE;
 
     	    ret = aio_enqueue(fd, buf, mSize, mAddr, op);
 	    if (ret != 1) {
@@ -170,51 +163,8 @@ static unsigned long select_size(unsigned long org_size)
     return modify_size;
 }
 
-static void fill_data(char *buf, unsigned int size)
-{
-    if( memset(buf ,rand() ,size * desc->interface_unit) == NULL){
-	PRINT("Error on workload data setup, file:%s, line:%d\n", __func__, __LINE__);
-    }
-}
 
-static int mem_allocation(char **buf, int reqSize)
-{
-	int alignedReqSize;
-	int i;
 	
-	if(desc->alignment){
-	    alignedReqSize = GET_ALIGNED_VALUE(reqSize);
-	    PRINT("%s : reqSize:%d, alignedReqSize:%d, align:%d\n",
-		    __func__, reqSize, alignedReqSize, desc->alignment);
-	    if( posix_memalign((void **)buf, SIZE_OF_SECTOR, alignedReqSize) != 0){
-		PRINT("%s : buffer allocation failed\n", __func__);
-		exit(1);
-	    }
-	}else{
-	    if(	(*buf = (char *)malloc(reqSize)) == NULL ){
-		PRINT("%s : buffer allocation failed\n", __func__);
-		exit(1);
-	    }
-	}
-	if(desc->alignment)
-	    return alignedReqSize;
-	else
-	    return reqSize;
-}
 
-void usec_sleep(long long usec)
-{
-    struct timeval now;
 
-    get_current_time(&now);
-    while(usec_elapsed(now) < usec){
-	NOP;
-    }
-}
 
-long long usec_elapsed(struct timeval start)
-{
-    struct timeval end;
-    get_current_time(&end);
-    return TIME_VALUE(&end) - TIME_VALUE(&start);
-}

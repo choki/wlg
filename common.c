@@ -20,7 +20,7 @@ void parse_one_line(char *line, readLine *string)
     strncpy(tmp, line, strlen(line)+1);
 
     ptr = strtok(tmp, ",");
-    string->cpu = atoi(ptr);
+    string->thr_id = atoi(ptr);
     cnt++;
     while(ptr != NULL){
 	//printf("%s ",ptr);
@@ -59,7 +59,50 @@ void parse_one_line(char *line, readLine *string)
     free(tmp);
 }
 
+void fill_data(wg_env *desc, char *buf, unsigned int size)
+{
+    if( memset(buf ,rand() ,size * desc->interface_unit) == NULL){
+	PRINT("Error on workload data setup, file:%s, line:%d\n", __func__, __LINE__);
+    }
+}
+int mem_allocation(wg_env *desc, char **buf, int reqSize)
+{
+	int alignedReqSize;
+	int i;
+	if(desc->alignment){
+	    alignedReqSize = GET_ALIGNED_VALUE(reqSize);
+	    PRINT("%s : reqSize:%d, alignedReqSize:%d, align:%d\n",
+		    __func__, reqSize, alignedReqSize, desc->alignment);
+	    if( posix_memalign((void **)buf, SIZE_OF_SECTOR, alignedReqSize) != 0){
+		PRINT("%s : buffer allocation failed\n", __func__);
+		exit(1);
+	    }
+	}else{
+	    if(	(*buf = (char *)malloc(reqSize)) == NULL ){
+		PRINT("%s : buffer allocation failed\n", __func__);
+		exit(1);
+	    }
+	}
+	if(desc->alignment)
+	    return alignedReqSize;
+	else
+	    return reqSize;
+}
 void get_current_time(struct timeval *now)
 {
     gettimeofday(now, NULL);
+}
+void usec_sleep(long long usec)
+{
+    struct timeval now;
+    get_current_time(&now);
+    while(usec_elapsed(now) < usec){
+	NOP;
+    }
+}
+long long usec_elapsed(struct timeval start)
+{
+    struct timeval end;
+    get_current_time(&end);
+    return TIME_VALUE(&end) - TIME_VALUE(&start);
 }

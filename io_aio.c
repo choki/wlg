@@ -19,7 +19,7 @@
 
 static 			pthread_t thr;
 static unsigned long 	status_mask = 0;		//Status mask indicating which iocb is used
-static int 		last_used_id = 0;		//Queue id that will be used in next turn
+static int 		next_id = 0;		//Queue id that will be used in next turn
 static my_iocb 		my_iocbp[MAX_QUEUE_DEPTH]={0};
 static unsigned int 	max_depth;			//User setting max queue depth
 static io_context_t 	context;
@@ -153,7 +153,7 @@ static int find_and_set_id(void)
 
     pthread_mutex_lock(&aio_status_mask_mutex);
     for(i=0; i<max_depth; i++){
-	chk_bit = last_used_id +i;
+	chk_bit = next_id +i;
 	if(chk_bit >= max_depth){
 	    chk_bit %= max_depth;
 	}
@@ -165,9 +165,9 @@ static int find_and_set_id(void)
 	else{
 	    status_mask|=(1<<chk_bit);
 	    //PRINT("SET status_mask:%08lx, id:%d\n", status_mask, chk_bit);
-	    last_used_id = chk_bit +1;
-	    if(last_used_id >= max_depth){
-		last_used_id %= max_depth;
+	    next_id = chk_bit +1;
+	    if(next_id >= max_depth){
+		next_id %= max_depth;
 	    }
 	    //PRINT("Next id=%d\n", last_used_id);
 	    pthread_mutex_unlock(&aio_status_mask_mutex);

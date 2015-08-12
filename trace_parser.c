@@ -22,9 +22,9 @@ void main(void)
     bool find = false;
     int i = 0;
 
-    fpR1 = fopen("./trace", "r");
-    fpR2 = fopen("./trace", "r");
-    fpW = fopen("./trace_p", "w+");
+    fpR1 = fopen(TRACE_INPUT_FILE_NAME, "r");
+    fpR2 = fopen(TRACE_INPUT_FILE_NAME, "r");
+    fpW = fopen(PARSER_OUTPUT_FILE_NAME, "w+");
 
     line1 = malloc(sizeof(char)*MAX_STR_LEN);
     line2 = malloc(sizeof(char)*MAX_STR_LEN);

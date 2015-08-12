@@ -5,7 +5,6 @@
 //	which is blktrace log trace's max request size.
 #define REPLAYER_MAX_FILE_SIZE 5*1024*1024 	//5MB
 
-#define NOP __asm__ __volatile__("rep;nop": : :"memory")
 
 void *workload_replayer(void *arg);
 

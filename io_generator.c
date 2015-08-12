@@ -22,9 +22,7 @@
 static int select_op(unsigned long cur_file_size);
 static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, unsigned long prior_end_addr, int op, unsigned long cur_file_size);
 static unsigned long select_size(unsigned long start_addr, int op, unsigned long cur_file_size);
-static void fill_data(char *buf, unsigned int size);
 static unsigned int get_rand_range(unsigned int min, unsigned int max);
-static int mem_allocation(char **buf, int reqSize);
 
 /* static varialbes */
 static wg_env *desc;
@@ -71,22 +69,22 @@ void *workload_generator(void *arg)
 	exit(1);
     }
     //aio_initialize(desc->max_queue_depth);
-    mem_allocation( &buf, (desc->max_size)*(desc->interface_unit) * desc->max_queue_depth );
+    mem_allocation(desc, &buf, (desc->max_size)*(desc->interface_unit));
     if (NULL == buf) {
 	PRINT("Error on memory allocation, file:%s, line:%d\n", __func__, __LINE__);
 	exit(1);
     }
-#ifdef ONLY_FOR_TEST
+    //Preparing for 100% READ_W, otherwise read operation will fail.
+    if(desc->write_w == 0){
     lseek(fd, GET_ALIGNED_VALUE(desc->max_addr-512), SEEK_SET);
-    fill_data(buf, 512);
+	fill_data(desc, buf, 512);
     ret = write(fd, buf , 512);
     if (ret != 512) {
 	PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
 	exit(1);
     }
     max_written_size = desc->max_addr;
-    size = 2048;
-#endif
+    }
     //usleep(50);
     get_current_time(&start_time);
 
@@ -104,7 +102,7 @@ void *workload_generator(void *arg)
 #else
 	size = select_size(start_addr, op , max_written_size);
 #endif
-	fill_data(buf, size);
+	fill_data(desc, buf, size);
 
 	PRINT("\nGENERATOR tid:%u %s %s Addr:%12lu \t Size:%12lu\n", 
 		tid,
@@ -115,9 +113,8 @@ void *workload_generator(void *arg)
 
     	pthread_mutex_lock(&thr_mutex);
 	get_current_time(&current_time);
-	trace_time = TIME_VALUE(&current_time);
-	sprintf(trace_line, "%u,%llu,%s,%s,%lu,%lu", 
-		tid, trace_time, (op==WG_READ?"R":"W"), "D", start_addr, size);
+	sprintf(trace_line, "%u,%li.%li,%s,%s,%lu,%lu", 
+		tid, current_time.tv_sec, current_time.tv_usec, (op==WG_READ?"R":"W"), "D", start_addr, size);
 	tracer_add(trace_line);
 	pthread_mutex_unlock(&thr_mutex);
 
@@ -125,12 +122,10 @@ void *workload_generator(void *arg)
 
 	switch (op){
 	    case WG_READ:
-		lseek(fd, start_addr, SEEK_SET);
-		ret = read(fd, buf , size);
+		ret = pread(fd, buf , size, start_addr);
 		break;
 	    case WG_WRITE:
-		lseek(fd, start_addr, SEEK_SET);
-		ret = write(fd, buf , size);
+		ret = pwrite(fd, buf , size, start_addr);
 
 		if(max_written_size < start_addr + size){
 		    max_written_size = start_addr + size;
@@ -262,12 +257,6 @@ static unsigned long select_size(unsigned long start_addr, int op, unsigned long
     return selector;
 }
 
-static void fill_data(char *buf, unsigned int size)
-{
-    if( memset(buf ,rand() ,size * desc->interface_unit) == NULL){
-	PRINT("Error on workload data setup, file:%s, line:%d\n", __func__, __LINE__);
-    }
-}
 
 static unsigned int get_rand_range(unsigned int min, unsigned int max)
 {
@@ -275,27 +264,4 @@ static unsigned int get_rand_range(unsigned int min, unsigned int max)
     return (unsigned int)((rand() % range) + min);
 }
 
-static int mem_allocation(char **buf, int reqSize)
-{
-	int alignedReqSize;
-	int i;
 	
-	if(desc->alignment){
-	    alignedReqSize = GET_ALIGNED_VALUE(reqSize);
-	    PRINT("%s : reqSize:%d, alignedReqSize:%d, align:%d\n",
-		    __func__, reqSize, alignedReqSize, desc->alignment);
-	    if( posix_memalign((void **)buf, SIZE_OF_SECTOR, alignedReqSize) != 0){
-		PRINT("%s : buffer allocation failed\n", __func__);
-		exit(1);
-	    }
-	}else{
-	    if(	(*buf = (char *)malloc(reqSize)) == NULL ){
-		PRINT("%s : buffer allocation failed\n", __func__);
-		exit(1);
-	    }
-	}
-	if(desc->alignment)
-	    return alignedReqSize;
-	else
-	    return reqSize;
-}

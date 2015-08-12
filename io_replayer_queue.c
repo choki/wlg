@@ -125,9 +125,9 @@ void print_queue(int thread_id)
     
     PRINT("Print queue#%d, total node#:%u\n", thread_id, r_queue[thread_id].num_node);
     while(node != NULL){
-	PRINT("node#%d  cpu:%d, sTime:%lf, rwbs:%s, action:%s, sSector:%ld, size:%d\n",
+	PRINT("node#%d  thr_id:%d, sTime:%lf, rwbs:%s, action:%s, sSector:%ld, size:%d\n",
 		cnt,
-		node->req.cpu,
+		node->req.thr_id,
 		node->req.sTime,
 		node->req.rwbs,
 		node->req.action,

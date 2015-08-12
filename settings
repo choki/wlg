@@ -6,21 +6,19 @@ FILE_PATH /dev/sda1
 # 0 -> Generating mode
 # 	Workload will be generated according to the below user setting.
 # 1 -> Replay mode
-# 	Workload will be replayed accroding to the trace file.
+# 	Workload will be replayed accroding to the "TRACE_INPUT_FILE_NAME" file.
 # 	Most of user settings will be ignored.
-# WARNING : 
-# 	Set "THREAD_NUM" to "1' for timing accuracy, when testing with "Replay mode".
 TEST_MODE 0
 
 	# Number of thread that will produce I/O request in parallel manner
-	# Only valid in "generating" mode
+	# Only valid in "generating" mode because of timing accuracy problem in "replay" mode.
 	THREAD_NUM 5
 
-	# Number of queue depth (Asynchronous I/O)
+	# Number of queue depth (Asynchronous I/O - Using libaio)
 	# Only valid in "replay" mode
 	MAX_QUEUE_DEPTH 32
 
-# 0 -> Time, 
+# 0 -> Time
 # 1 -> Number of Requests
 TEST_LENGTH 1
 
@@ -42,14 +40,15 @@ MAX_ADDRESS 1000000000
 MIN_ADDRESS 0
 
 # Size of request
+# To make fixed size request test, make these values the same.
 MAX_SIZE 100000
 MIN_SIZE 0
 
-# Each operation type is selected by each weight
+# Each operation type is selected by each weigh
 READ_W 50
 WRITE_W 50
 
-# Sequntiality is managed by weighs
+# Sequntiality is managed by weigh
 SEQUENTIAL_W 50
 NONSEQUENTIAL_W 50
 
@@ -68,6 +67,7 @@ ALIGNMENT 1
 	ALIGNMENT_UNIT 512
 
 # Make random number deterministically.
+# If "1" the issuing requests are the same in every test round.
 # 	1 -> Deterministic
 # 	0 -> Non-deterministic
 RANDOM_DETERMINISTIC 1

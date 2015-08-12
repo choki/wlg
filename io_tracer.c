@@ -38,7 +38,7 @@ void *tracer_add(char *line)
 	    PRINT("\n"); 
 	    PRINT("\t**** WARNING! ****\n"); 
 	    PRINT("\tTrace buffer is full.\n");
-	    PRINT("\tTrace stopped.\n");
+	    PRINT("\tTracing stopped.\n");
 	    PRINT("\tRecommand to enlarge \"MAX_TRACE_NUM value.\"\n");
 	    PRINT("\t******************\n"); 
 	    PRINT("\n"); 
@@ -62,7 +62,7 @@ void tracer_save_file(void)
     int i;
     char *tmp = ptracer;
 
-    if( (fpW=fopen("./generator_trace", "w+")) == NULL ){
+    if( (fpW=fopen(TRACER_OUPUT_FILE_NAME, "w+")) == NULL ){
 	PRINT("Error on opening the \"trace\" file, file:%s, line:%d\n", \
 	       	__func__, __LINE__);
 	exit(1);
