@@ -43,7 +43,6 @@ void *workload_generator(void *arg)
     struct timeval current_time, 
 	posed_time, 
 	start_time;
-    unsigned long max_written_size = 0;
     //pthread_t tid;
     unsigned int tid = 0;
 #ifdef ONLY_FOR_TEST
@@ -76,14 +75,18 @@ void *workload_generator(void *arg)
     }
     //Preparing for 100% READ_W, otherwise read operation will fail.
     if(desc->write_w == 0){
-    lseek(fd, GET_ALIGNED_VALUE(desc->max_addr-512), SEEK_SET);
+	lseek(fd, GET_ALIGNED_VALUE(desc->max_addr-512), SEEK_SET);
 	fill_data(desc, buf, 512);
-    ret = write(fd, buf , 512);
-    if (ret != 512) {
-	PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
-	exit(1);
-    }
-    max_written_size = desc->max_addr;
+	ret = write(fd, buf , 512);
+	if (ret != 512) {
+	    PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
+	    exit(1);
+	}
+	pthread_mutex_lock(&thr_mutex);
+	if(desc->max_addr > max_written_size){
+	    max_written_size = desc->max_addr;
+	}
+	pthread_mutex_unlock(&thr_mutex);
     }
     //usleep(50);
     get_current_time(&start_time);
@@ -102,6 +105,12 @@ void *workload_generator(void *arg)
 #else
 	size = select_size(start_addr, op , max_written_size);
 #endif
+	if(size == 0){
+	    continue;
+	}
+	if( (desc->max_size == desc->min_size) && (size != desc->min_size) ){
+	    continue;
+	}
 	fill_data(desc, buf, size);
 
 	PRINT("\nGENERATOR tid:%u %s %s Addr:%12lu \t Size:%12lu\n", 
@@ -128,8 +137,12 @@ void *workload_generator(void *arg)
 		ret = pwrite(fd, buf , size, start_addr);
 
 		if(max_written_size < start_addr + size){
-		    max_written_size = start_addr + size;
+		    pthread_mutex_lock(&thr_mutex);
+		    if(start_addr+size > max_written_size){
+			max_written_size = start_addr + size;
+		    }
 		    PRINT("New max_written_size:%lu\n", max_written_size);
+		    pthread_mutex_unlock(&thr_mutex);
 		}
 		fsync(fd);
 		break;
@@ -213,7 +226,7 @@ static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, unsigned 
     selector = get_rand_range(0, desc->sequential_w + desc->nonsequential_w - 1);
 
     //Sequential case
-    if(selector < desc->sequential_w){
+    if( (selector < desc->sequential_w) && (cur_file_size != 0) ){
 	*start_addr = prior_end_addr;
 	if(selector >= desc->max_addr){
 	    *start_addr = desc->min_addr;
@@ -243,7 +256,11 @@ static unsigned long select_size(unsigned long start_addr, int op, unsigned long
     unsigned long selector;
     unsigned long aligned_selector;
 
-    selector = get_rand_range(desc->min_size, desc->max_size - 1);
+    if(desc->min_size == desc->max_size){
+	selector = desc->min_size;
+    }else{
+	selector = get_rand_range(desc->min_size, desc->max_size - 1);
+    }
 
     if(op == WG_READ && start_addr+selector > cur_file_size){
 	selector = cur_file_size - start_addr;

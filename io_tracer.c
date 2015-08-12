@@ -29,7 +29,7 @@ void *tracer_add(char *line)
 {
     if(overflow == 0){
 	strcpy(ptracer+pcurrent, line);
-	PRINT("pcurrent: %u line:%s\n", pcurrent, ptracer+pcurrent);
+	//PRINT("pcurrent: %u line:%s\n", pcurrent, ptracer+pcurrent);
 	pcurrent += strlen(line);
 	length_per_line[line_cnt] = strlen(line);
 	line_cnt++;

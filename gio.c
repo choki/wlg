@@ -24,6 +24,7 @@
 /* Local Variables */
 static wg_env *setting;
 
+unsigned long max_written_size = 0;
 unsigned int shared_cnt = 0;
 pthread_mutex_t thr_mutex = PTHREAD_MUTEX_INITIALIZER;
 

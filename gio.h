@@ -3,6 +3,7 @@
 
 
 /* extern variables */
+extern unsigned long max_written_size;
 extern unsigned int shared_cnt;
 extern pthread_mutex_t thr_mutex;
 
