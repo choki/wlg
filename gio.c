@@ -143,13 +143,10 @@ void main(void)
 	}
     }
     if(setting->test_mode == WG_REPLAY_MODE){
-	init_queue(setting->thread_num);
+	init_queue();
 	//Provid trace input to request queue in each thread.
 	trace_feeder();
-	//TODO for test
-	/*for(i=0; i<setting->thread_num; i++){
-	    print_queue(i);
-	}*/
+	//print_queue();
     }
     for(i=0; i<setting->thread_num; i++){
 	tid = pthread_join(tinfo[i].thr, (void **)&status);
@@ -159,8 +156,9 @@ void main(void)
 	}
 	PRINT("Thread joined with status %d\n", status);
     }
-    PRINT("$$$$$$\n");
-    tracer_save_file();
+    if(setting->test_mode == WG_GENERATING_MODE){
+	tracer_save_file();
+    }
     terminate_queue();
     if(setting->file_path)
 	free(setting->file_path);
@@ -197,7 +195,7 @@ static void trace_feeder(void)
 		//Need to remember start time of very first request
 		set_start_time(string.sTime);
 	    }
-	    en_queue(valid_cnt%(setting->thread_num), string);
+	    en_queue(string);
 	    valid_cnt++;
 	}
     }

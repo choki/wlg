@@ -14,30 +14,30 @@ static long long trace_start_time = -1;
 static long long  gio_start_time;
 
 
-void init_queue(unsigned int total_thread_num)
+void init_queue(void)
 {
     int i;
 
-    r_queue = (req_queue *)malloc(sizeof(req_queue) * total_thread_num);
+    r_queue = (req_queue *)malloc(sizeof(req_queue));
     if(r_queue == NULL){
 	PRINT("Error on malloc, file:%s, line:%d\n", __func__, __LINE__);
 	exit(1);
     }
-    for(i=0; i<total_thread_num; i++){
-	r_queue->head = NULL;
-	r_queue->tail = NULL;
-	r_queue->num_node = 0;
-    }
+    r_queue->head = NULL;
+    r_queue->tail = NULL;
+    r_queue->num_node = 0;
 }
 
 void terminate_queue(void){
-    free(r_queue);
+    if(r_queue){
+	free(r_queue);
+    }
 }
 
-void en_queue(int thread_id, readLine r)
+void en_queue(readLine r)
 {
     pthread_mutex_lock(&thr_mutex);
-    req_queue *tmp_queue = &r_queue[thread_id];
+    req_queue *tmp_queue = r_queue;
     req_node *new_node;
     
     new_node = (req_node *)malloc(sizeof(req_node));
@@ -62,10 +62,10 @@ void en_queue(int thread_id, readLine r)
     pthread_mutex_unlock(&thr_mutex);
 }
 
-readLine de_queue(int thread_id)
+readLine de_queue(void)
 {
     pthread_mutex_lock(&thr_mutex);
-    req_queue *tmp_queue = &r_queue[thread_id];
+    req_queue *tmp_queue = r_queue;
     req_node  *tmp_node;
     readLine ret_req;
 
@@ -88,11 +88,11 @@ void set_queue_status(int value)
     file_read_finished = value;
 }
 
-int get_queue_status(int thread_id)
+int get_queue_status(void)
 {
     //"Feeder is done" && "Queue is empty" == No more job && aio request ack is all received
     if(file_read_finished && 
-	    (r_queue[thread_id].num_node == 0) && 
+	    (r_queue->num_node == 0) && 
 	    !get_aio_status())
 	return 1;
     else
@@ -118,12 +118,12 @@ void get_start_time(long long *trace_sTime, long long *gio_sTime)
     *gio_sTime   = gio_start_time;
 }
 
-void print_queue(int thread_id)
+void print_queue(void)
 {
     unsigned int cnt = 0;
-    req_node *node = r_queue[thread_id].tail;
+    req_node *node = r_queue->tail;
     
-    PRINT("Print queue#%d, total node#:%u\n", thread_id, r_queue[thread_id].num_node);
+    PRINT("Print queue, total node#:%u\n", r_queue->num_node);
     while(node != NULL){
 	PRINT("node#%d  thr_id:%d, sTime:%lf, rwbs:%s, action:%s, sSector:%ld, size:%d\n",
 		cnt,

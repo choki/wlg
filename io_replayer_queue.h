@@ -15,14 +15,14 @@ typedef struct _req_queue{
 } req_queue;
 
 
-void 	init_queue(unsigned int total_thread_num);
+void 	init_queue(void);
 void 	terminate_queue(void);
-void 	en_queue(int thread_id, readLine r);
-readLine de_queue(int thread_id);
+void 	en_queue(readLine r);
+readLine de_queue(void);
 void 	set_queue_status(int value);
-int 	get_queue_status(int thread_id);
+int 	get_queue_status(void);
 void 	set_start_time(double sTime);
 void 	get_start_time(long long *trace_sTime, long long *gio_sTime);
-void 	print_queue(int thread_id);
+void 	print_queue(void);
 
 #endif //__IO_REPLAYER_QUEUE_H__

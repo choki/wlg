@@ -44,13 +44,7 @@ void *workload_replayer(void *arg)
     unsigned long mAddr;
     OPERATION_TYPE op;
 
-
     desc = (wg_env *)arg;
-
-    pthread_mutex_lock(&thr_mutex);
-    tid = shared_cnt++;
-    pthread_mutex_unlock(&thr_mutex);
-
     if( (fd = open(desc->file_path, O_CREAT|O_RDWR|O_DIRECT, 0666)) == -1 ){
     //if( (fd = open(desc->file_path, O_CREAT|O_RDWR, 0666)) == -1){
 	PRINT("Error on opening the init_file of workload generator, file:%s, line:%d, fd=%d\n", __func__, __LINE__, fd);
@@ -69,11 +63,9 @@ void *workload_replayer(void *arg)
 
     while(1){
 	//Dequeueing
-	req = de_queue(tid);
-	
+	req = de_queue();
 	//If a request is successfully dequeued.
 	if(strcmp(req.rwbs, "EMPTY") != 0){
-
 	    mSize = select_size(req.size);
 	    mAddr = select_start_addr(req.sSector);
 	    fill_data(desc, buf, mSize);
@@ -115,22 +107,22 @@ void *workload_replayer(void *arg)
 		break;
 	    }
 #else
-
     	    ret = aio_enqueue(fd, buf, mSize, mAddr, op);
 	    if (ret != 1) {
 		PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
 		break;
 	    }
 #endif //BLOCKING_IO
-	    PRINT("DEQUEUED REQ tid:%u sTime:%lf rwbs:%s Addr:%12li \t Size:%12lu\n\n", 
+	    /*PRINT("DEQUEUED REQ tid:%u sTime:%lf rwbs:%s Addr:%12li \t Size:%12lu\n\n", 
 		    tid,
 		    req.sTime,
 		    req.rwbs,
 		    mAddr,
 		    mSize);	
-    }
+		   */
+	}
 
-	if( get_queue_status(tid) == 1 ){
+	if( get_queue_status() == 1 ){
 	    PRINT("END OF REPLAYER\n");
 	    break;
 	}

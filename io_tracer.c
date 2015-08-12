@@ -34,14 +34,7 @@ void *tracer_add(char *line)
 	length_per_line[line_cnt] = strlen(line);
 	line_cnt++;
 
-	if(line_cnt >= MAX_TRACE_NUM){
-	    PRINT("\n"); 
-	    PRINT("\t**** WARNING! ****\n"); 
-	    PRINT("\tTrace buffer is full.\n");
-	    PRINT("\tTracing stopped.\n");
-	    PRINT("\tRecommand to enlarge \"MAX_TRACE_NUM value.\"\n");
-	    PRINT("\t******************\n"); 
-	    PRINT("\n"); 
+	if(line_cnt > MAX_TRACE_NUM){
 	    overflow = 1;
 	}
     }
@@ -62,6 +55,18 @@ void tracer_save_file(void)
     int i;
     char *tmp = ptracer;
 
+    if(line_cnt > MAX_TRACE_NUM){
+	PRINT("\n"); 
+	PRINT("\t*************** WARNING! ****************\n"); 
+	PRINT("\tTrace buffer was overflowed while processing.\n");
+	PRINT("\tOnly part of the traces are saved.\n");
+	PRINT("\tRecommand to enlarge \"MAX_TRACE_NUM value.\"\n");
+	PRINT("\tCurrent \"MAX_TRACE_NUM\" is %d and total traces are %d\n", 
+		MAX_TRACE_NUM, line_cnt);
+	PRINT("\t******************************************\n"); 
+	PRINT("\n"); 
+	overflow = 1;
+    }
     if( (fpW=fopen(TRACER_OUPUT_FILE_NAME, "w+")) == NULL ){
 	PRINT("Error on opening the \"trace\" file, file:%s, line:%d\n", \
 	       	__func__, __LINE__);

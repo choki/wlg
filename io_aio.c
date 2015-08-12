@@ -142,7 +142,10 @@ static void *aio_dequeue(void *arg)
 	    req_num--;
 	    pthread_mutex_unlock(&aio_req_num_mutex);
 	}
+	//TODO for test
+    	//usleep(1000);
     }
+
 }
 
 static int find_and_set_id(void)
