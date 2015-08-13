@@ -7,5 +7,5 @@ set ytics 32
 set ylabel 'Qeueued sectors'
 set xlabel 'Time'
 f(x)=((x) eq 'C'?a=a-$6:a=a+$6)
-#plot "trace.blkparse" u ($2*1000):(f(strcol(4))) with steps title 'Issue / Complete'
-plot "trace.blkparse_gen" u ($2*1000):(f(strcol(4))) with steps title 'Issue / Complete', "trace.blkparse_rep" u ($2*1000):(f(strcol(4))) with steps 
+plot "trace.blkparse" u ($2*1000):(f(strcol(4))) with steps title 'Issue / Complete'
+#plot "trace.blkparse_gen" u ($2*1000):(f(strcol(4))) with steps title 'Issue / Complete', "trace.blkparse_rep" u ($2*1000):(f(strcol(4))) with steps 

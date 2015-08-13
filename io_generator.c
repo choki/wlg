@@ -144,7 +144,7 @@ void *workload_generator(void *arg)
 		    PRINT("New max_written_size:%lu\n", max_written_size);
 		    pthread_mutex_unlock(&thr_mutex);
 		}
-		fsync(fd);
+		//fsync(fd);
 		break;
 	    default:
 		PRINT("Error on file:%s, line:%d\n", __func__, __LINE__);

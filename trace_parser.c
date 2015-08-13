@@ -6,7 +6,10 @@
 #include "common.h"
 #include "trace_parser.h"
 
-summary sum[SECTOR_ARRAY_SIZE] = {0};
+// Each array is allocated to R/W separately.
+// sum[0] : Read
+// Sum[1] : Write
+summary sum[2][SECTOR_ARRAY_SIZE] = {0};
 
 void main(void)
 {
@@ -20,9 +23,10 @@ void main(void)
     readLine string1;
     readLine string2;
     bool find = false;
-    int i = 0;
+    int i,j;
     int cur_bytes = 0;
     int total_count = 0;
+    int r_skip;
 
     fpR1 = fopen(PARSER_INPUT_FILE_NAME, "r");
     fpR2 = fopen(PARSER_INPUT_FILE_NAME, "r");
@@ -64,30 +68,61 @@ void main(void)
 	    if(find == true){
 		sprintf(tmp, "%s,%lf\n", line1, string2.sTime - string1.sTime);
 		//Array update
-		sum[string2.size].total += string2.sTime - string1.sTime;
-		sum[string2.size].count ++;
+		if( strstr(string2.rwbs,"R")!=NULL ){
+		    //Read
+		    sum[WG_READ][string2.size].total += string2.sTime - string1.sTime;
+		    sum[WG_READ][string2.size].count ++;
+		}else if( strstr(string2.rwbs,"W")!=NULL ){
+		    //Write
+		    sum[WG_WRITE][string2.size].total += string2.sTime - string1.sTime;
+		    sum[WG_WRITE][string2.size].count ++;
+		}
 	    }else{
 		sprintf(tmp, "%s,%s\n", line1, "Error");
 	    }
 	    PRINT("%s\n", tmp);
-	    fwrite(tmp, 1, strlen(tmp)+1, fpW);
+	    fwrite(tmp, 1, strlen(tmp), fpW);
 	    //Re-initialize
 	    find = false;
+	    //In next time, search will be start from last fpR1's file position.
 	    fseek(fpR2, cur_bytes, SEEK_SET);
 	} //End of if()
     } //End of while()
     PRINT("\nThe END\n");
     
     //Print summary
-    PRINT("sum = Total / Count = Average latency\n");
-    for(i=0; i<=SECTOR_ARRAY_SIZE; i++){
-	total_count += sum[i].count;
+    PRINT("\t\t\tSECTOR SIZE  =  TOTAL LAT./Cnt = AVG LAT.\n");
+    PRINT("\t\t READ                                    WRITE\n");
+    PRINT("----------------------------------------------------------------------------\n");
 
-	if(sum[i].count == 0){ 
-	    continue;
-	}else{
-	    PRINT("%d Sectors = %lf/%d = %lf\n", 
-		    i, sum[i].total, sum[i].count, sum[i].total/sum[i].count);
+    for(i=0; i<=SECTOR_ARRAY_SIZE; i++){
+	r_skip = 0;
+	for(j=0; j<NUM_OPERATION_TYPE; j++){
+	    total_count += sum[j][i].count;
+
+	    if(sum[j][i].count == 0){ 
+		if(j == WG_READ){
+		    r_skip = 1;
+		}else{
+		    if(r_skip == 0){
+			PRINT("\t|\n");
+		    }else{
+		    }
+		}
+		continue;
+	    }else{
+		if(j == WG_READ){
+		    PRINT("%5d = %10lf/%4d = %10lf", 
+			    i, sum[j][i].total, sum[j][i].count, sum[j][i].total/sum[j][i].count);
+		}else{
+		    if(r_skip == 1){
+			PRINT("\t\t\t\t");
+		    }	
+    		    PRINT("\t|\t%5d = %10lf/%4d = %10lf\n", 
+			    i, sum[j][i].total, sum[j][i].count, sum[j][i].total/sum[j][i].count);
+
+		}
+	    }
 	}
     }
     PRINT("Total count = %d\n", total_count);
