@@ -20,6 +20,36 @@
 #include "common.h"
 #include "io_aio.h"
 
+/* 
+ *	[ Replayable trace format ]
+ *
+ *      Thread ID : 
+ *      	This value is only for checking purpose to identify thread ID produced the request.
+ *      	No meaning in "replay mode" since it runs in single thread.
+ *      Start time :
+ *      	The time request is sent.
+ *      RWBS :
+ *      	This value should have a letter either of "R" or "W" in the string.
+ *      Action :
+ *      	Refer to TRACE ACTION of "blkparse"'s man page.
+ *      	This value should be "D", otherwise replayer skip the line.
+ *      Start sector :
+ *      	Start LBA.
+ *      Size :
+ *      	Request size.
+ *
+ *
+ *	[ How to make/get trace ]
+ *
+ *	Option#1. Manually make own trace that comply with "replayable format".
+ *      Option#2. Get log from I/O generator
+ *      Option#3. Get log from blktrace
+ *			$ sudo blktrace -d DEV_PATH -a complete -a issue -o LOG_NAME_1
+ *			$ sudo blkparse -i LOG_NAME_1.blktrace.0 -f "%2c,%T.%t,%d,%a,%S,%n\n" -o LOG_NAME_2
+ *		    OR just run script file
+ *			$ sudo ./blktrace.sh
+ */
+
 /* static varialbes */
 static wg_env *desc;
 
