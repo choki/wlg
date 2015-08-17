@@ -51,6 +51,8 @@ trace.blktrace.*
 trace.blkparse
 parser
 gio
+first_run
+*.d
 
 # Windows visual studio files #
 .vs/

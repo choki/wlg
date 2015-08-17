@@ -13,16 +13,15 @@
 #include <unistd.h>
 #include <sched.h>	//sched_affinity()
 #include <pthread.h>
-//#include <libaio.h>
 #include "gio.h"
 #include "common.h"
 
-#define ONLY_FOR_TEST
+//#define ONLY_FOR_TEST
 
 /* Static Functions */
-static int select_op(unsigned long cur_file_size);
-static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, unsigned long prior_end_addr, int op, unsigned long cur_file_size);
-static unsigned long select_size(unsigned long start_addr, int op, unsigned long cur_file_size);
+static int select_op(void);
+static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, long prior_end_addr, int op);
+static unsigned long select_size(unsigned long start_addr, int op);
 static unsigned int get_rand_range(unsigned int min, unsigned int max);
 
 /* static varialbes */
@@ -32,23 +31,31 @@ static wg_env *desc;
 void *workload_generator(void *arg)
 {
     int fd;
+    int fd_check;
     int op;
     SEQUENTIALITY_TYPE seq_rnd;
     size_t ret;
     unsigned long start_addr;
     unsigned long size;
-    unsigned long prior_end_addr = 0;
-    unsigned int counter = 0;
-    unsigned long i = 0;
+    unsigned int burst_cnt = 0;
+    unsigned long req_cnt = 0;
     char *buf;
+    char *init_buf;
     struct timeval current_time, 
 	posed_time, 
 	start_time;
-    //pthread_t tid;
     unsigned int tid = 0;
+
+    int i = 0;
+    int init_chunk_size;
+    int first_run = 0;
+    struct stat stat_buf;
 #ifdef ONLY_FOR_TEST
     int test_count=1;
 #endif
+    char comp_1[VERIFY_STR_LEN] = {0};
+    char comp_2[VERIFY_STR_LEN] = {0};
+
     //io tracer related
     unsigned long long trace_time;
     char trace_line[MAX_STR_LEN] = {0};
@@ -58,7 +65,6 @@ void *workload_generator(void *arg)
 	srand(time(NULL));
     }
     
-    //tid = pthread_self();
     pthread_mutex_lock(&thr_mutex);
     tid = shared_cnt++;
     pthread_mutex_unlock(&thr_mutex);
@@ -68,28 +74,48 @@ void *workload_generator(void *arg)
 	PRINT("Error on opening the init_file of workload generator, file:%s, line:%d, fd=%d\n", __func__, __LINE__, fd);
 	exit(1);
     }
-    //aio_initialize(desc->max_queue_depth);
     mem_allocation(desc, &buf, (desc->max_size)*(desc->interface_unit));
     if (NULL == buf) {
 	PRINT("Error on memory allocation, file:%s, line:%d\n", __func__, __LINE__);
 	exit(1);
     }
-    //Preparing for 100% READ_W, otherwise read operation will fail.
-    if(desc->write_w == 0){
-	lseek(fd, GET_ALIGNED_VALUE(desc->max_addr-512), SEEK_SET);
-	fill_data(desc, buf, 512);
-	ret = write(fd, buf , 512);
-	if (ret != 512) {
-	    PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
+
+    //Check if we need to make initial file.
+    pthread_mutex_lock(&thr_mutex);
+    if( stat(FIRST_RUN_CHECK_FILE_NAME, &stat_buf) != 0){
+	PRINT("%s file exist\n",FIRST_RUN_CHECK_FILE_NAME);
+	PRINT("This is first RUN, tid=%d\n", tid);
+	if( (fd_check = open(FIRST_RUN_CHECK_FILE_NAME, O_CREAT|O_RDONLY, 0666)) == -1){
+	    PRINT("Error on opening the init_file of workload generator, file:%s, line:%d, fd_check=%d\n", __func__, __LINE__, fd_check);
 	    exit(1);
 	}
-	pthread_mutex_lock(&thr_mutex);
-	if(desc->max_addr > max_written_size){
-	    max_written_size = desc->max_addr;
-	}
-	pthread_mutex_unlock(&thr_mutex);
+	first_run = 1;
+    }else{
+	first_run = 0;
     }
-    //usleep(50);
+    //Initial file sequantial write over the "MIN_ADDRESS~MAX_ADDRESS" range
+    if(first_run == 1){
+	PRINT("File initialization START, total size = %lu\n", desc->max_addr);
+	init_chunk_size = mem_allocation(desc, &init_buf, sizeof(char)*INITIAL_SEQ_WRITE_CHUNK_SIZE);
+	if (NULL == buf) {
+	    PRINT("Error on memory allocation, file:%s, line:%d\n", __func__, __LINE__);
+	    exit(1);
+	}
+	do{
+	    fill_data(desc, init_buf, init_chunk_size);
+	    ret = pwrite(fd, init_buf, init_chunk_size, i);
+	    if (ret != init_chunk_size) {
+		PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
+		exit(1);
+	    }
+	    i += init_chunk_size;
+	}while(i < desc->max_addr);
+	fsync(fd);
+	free(init_buf);
+	close(fd_check);
+	PRINT("File initialization END\n");
+    }
+    pthread_mutex_unlock(&thr_mutex);
     get_current_time(&start_time);
 
     PRINT("\n");
@@ -97,16 +123,17 @@ void *workload_generator(void *arg)
     size = 512;
 #endif
     while (1) {
-	op = select_op(max_written_size);
-	seq_rnd = select_start_addr(&start_addr, prior_end_addr, op, max_written_size);
-	
+	op = select_op();
+	// More likely fail to generate sequential requests as thread number are getting bigger, because of scheduling between the threads. Neverthless keep try to make sequential requests by using lock.
+	pthread_mutex_lock(&thr_mutex);
+	seq_rnd = select_start_addr(&start_addr, prior_end_addr, op);
 #ifdef ONLY_FOR_TEST
 	if(test_count%50 == 0){
 	    size *= 2;
 	}
 	test_count++;
 #else
-	size = select_size(start_addr, op , max_written_size);
+	size = select_size(start_addr, op);
 #endif
 	if(size == 0){
 	    continue;
@@ -116,6 +143,10 @@ void *workload_generator(void *arg)
 	    continue;
 	}
 #endif
+	// For sequentiality control
+	prior_end_addr = start_addr + size;
+	pthread_mutex_unlock(&thr_mutex);
+	
 	fill_data(desc, buf, size);
 
 	PRINT("\nGENERATOR tid:%u %s %s Addr:%12lu \t Size:%12lu\n", 
@@ -125,55 +156,50 @@ void *workload_generator(void *arg)
 		start_addr, 
 		size);
 
-    	pthread_mutex_lock(&thr_mutex);
-	get_current_time(&current_time);
-	sprintf(trace_line, "%u,%li.%06li,%s,%s,%lu,%lu", 
-		tid, current_time.tv_sec, current_time.tv_usec, (op==WG_READ?"R":"W"), "D", start_addr, size);
-	tracer_add(trace_line);
-	pthread_mutex_unlock(&thr_mutex);
-
-	//ret = aio_enqueue(fd, buf, size, start_addr, op);
+	if(desc->test_mode == WG_GENERATING_MODE){
+	    pthread_mutex_lock(&thr_mutex);
+	    get_current_time(&current_time);
+	    sprintf(trace_line, "%u,%li.%06li,%s,%s,%lu,%lu", 
+		    tid, current_time.tv_sec, current_time.tv_usec, (op==WG_READ?"R":"W"), "D", start_addr, size);
+	    tracer_add(trace_line);
+	    pthread_mutex_unlock(&thr_mutex);
+	}
 
 	switch (op){
 	    case WG_READ:
 		ret = pread(fd, buf , size, start_addr);
+		
+		if(desc->test_mode == WG_VERIFY_MODE){
+		    pread(fd, buf , size, start_addr);
+		    strncpy(comp_1, buf, sizeof(char)*VERIFY_STR_LEN);
+		    comp_1[VERIFY_STR_LEN] = '\0';
+		    PRINT("R COMP : %s\n", comp_1);
+		}
 		break;
 	    case WG_WRITE:
 		ret = pwrite(fd, buf , size, start_addr);
-
-		if(max_written_size < start_addr + size){
-		    pthread_mutex_lock(&thr_mutex);
-		    if(start_addr+size > max_written_size){
-			max_written_size = start_addr + size;
-		    }
-		    PRINT("New max_written_size:%lu\n", max_written_size);
-		    pthread_mutex_unlock(&thr_mutex);
-		}
 		//fsync(fd);
+		
+		if(desc->test_mode == WG_VERIFY_MODE){
+		    strncpy(comp_1, buf, sizeof(char)*VERIFY_STR_LEN);
+		    comp_1[VERIFY_STR_LEN] = '\0';
+		    PRINT("W COMP_1 : %s", comp_1);
+		    pread(fd, buf , size, start_addr);
+		    strncpy(comp_2, buf, sizeof(char)*VERIFY_STR_LEN);
+		    comp_2[VERIFY_STR_LEN] = '\0';
+		    PRINT("\t W COMP_2 : %s\n", comp_2);
+		}
 		break;
 	    default:
 		PRINT("Error on file:%s, line:%d\n", __func__, __LINE__);
 		exit(1);
 	}
-	if(op == WG_WRITE){
-	    if(max_written_size < start_addr + size){
-		max_written_size = start_addr + size;
-		PRINT("New max_written_size:%lu\n", max_written_size);
-	    }
-	}
-
-	// For sequentiality control
-	prior_end_addr = start_addr + size;
-
 	if (ret != size) {
-	//if (ret != 1) {
 	    PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
 	    break;
 	}
-
-	i++;
-	counter++;
-
+	req_cnt++;
+	burst_cnt++;
 	if (desc->test_length_type == WG_TIME) {
 	    get_current_time(&current_time);
 	    if ( (TIME_VALUE(&current_time) - TIME_VALUE(&start_time)) >= \
@@ -181,15 +207,15 @@ void *workload_generator(void *arg)
 		//Go out!!
 		break;
 	} else if (desc->test_length_type == WG_NUMBER) {
-	    if (i >= (unsigned int)desc->total_test_req) 
+	    if (req_cnt >= (unsigned int)desc->total_test_req) 
 		//Go out!!
 		break;
 	} else {
 	    PRINT("Error on file:%s, line:%d", __func__, __LINE__);
 	}
 
-	if (counter >= desc->burstiness_number) {
-	    counter = 0;
+	if (burst_cnt >= desc->burstiness_number) {
+	    burst_cnt = 0;
 	    get_current_time(&posed_time);
 
 	    while (1) {
@@ -207,14 +233,9 @@ void *workload_generator(void *arg)
 }
 
 /*  Functions for Workload Generation */
-static int select_op(unsigned long cur_file_size)
+static int select_op(void)
 {
     int selector;
-
-    if(cur_file_size == 0){
-	PRINT("First req must be write\n");
-	return WG_WRITE;
-    }
 
     selector = get_rand_range(0, desc->read_w + desc->write_w - 1);
     if(selector < desc->read_w)
@@ -223,7 +244,7 @@ static int select_op(unsigned long cur_file_size)
 	return WG_WRITE;
 }
 
-static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, unsigned long prior_end_addr, int op, unsigned long cur_file_size)
+static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, long prior_end_addr, int op)
 {
     unsigned long selector;
     SEQUENTIALITY_TYPE seq_rnd;
@@ -231,7 +252,7 @@ static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, unsigned 
     selector = get_rand_range(0, desc->sequential_w + desc->nonsequential_w - 1);
 
     //Sequential case
-    if( (selector < desc->sequential_w) && (cur_file_size != 0) ){
+    if( (selector < desc->sequential_w) && (prior_end_addr != -1) ){
 	*start_addr = prior_end_addr;
 	if(selector >= desc->max_addr){
 	    *start_addr = desc->min_addr;
@@ -240,23 +261,16 @@ static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, unsigned 
     }
     //Random case
     else{
-	if(op == WG_READ){
-	    *start_addr = get_rand_range(desc->min_addr, cur_file_size - 1);
-	    //PRINT("Read rand: cur_file_size=%lu, start_addr=%lu\n", cur_file_size, *start_addr);
-	}else{
-	    *start_addr = get_rand_range(desc->min_addr, desc->max_addr - 1);
-	}
+	*start_addr = get_rand_range(desc->min_addr, desc->max_addr - 1);
 	seq_rnd = WG_RND;
     }
-
     if( desc->alignment ){
 	*start_addr = GET_ALIGNED_VALUE(*start_addr);
     }
-
     return seq_rnd;
 }
 
-static unsigned long select_size(unsigned long start_addr, int op, unsigned long cur_file_size)
+static unsigned long select_size(unsigned long start_addr, int op)
 {
     unsigned long selector;
     unsigned long aligned_selector;
@@ -267,10 +281,7 @@ static unsigned long select_size(unsigned long start_addr, int op, unsigned long
 	selector = get_rand_range(desc->min_size, desc->max_size - 1);
     }
 
-    if(op == WG_READ && start_addr+selector > cur_file_size){
-	selector = cur_file_size - start_addr;
-	//PRINT("Read re-size: cur_file_size=%lu, modified selector=%lu\n", cur_file_size, selector);
-    }else if(start_addr + selector > desc->max_addr){
+    if(start_addr + selector > desc->max_addr){
 	selector = desc->max_addr - start_addr;
     }
     if(desc->alignment == 1){

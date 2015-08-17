@@ -14,11 +14,19 @@ PARSER_OBJS = $(PARSER_SRCS:.c=.o)
 .PHONY : all
 all: $(GIO_TARGET) $(PARSER_TARGET)
 
-$(GIO_TARGET): $(GIO_SRCS)
+$(GIO_TARGET): $(GIO_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
-$(PARSER_TARGET): $(PARSER_SRCS)
+$(PARSER_TARGET): $(PARSER_OBJS)
 	$(CC) -o $@ $^
+
+%.o:%.c
+	$(CC) -c $<
+
+#Dependency file generation
+%.d:%.c
+	@$(CC) -MM $< > $@;
+-include $(GIO_SRCS:.c=.d) $(GIO_PARSER:.c=.d)
+
 clean:
-	rm -rf $(GIO_TARGET) $(PARSER_TARGET)
-	rm -rf $(EXTRA_FILES)
+	rm -rf $(GIO_TARGET) $(PARSER_TARGET) $(EXTRA_FILES) *.d *.o first_run

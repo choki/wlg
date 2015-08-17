@@ -143,13 +143,15 @@ void *workload_replayer(void *arg)
 		break;
 	    }
 #endif //BLOCKING_IO
-	    /*PRINT("DEQUEUED REQ tid:%u sTime:%lf rwbs:%s Addr:%12li \t Size:%12lu\n\n", 
+#if 0
+	    PRINT("DEQUEUED REQ tid:%u sTime:%lf rwbs:%s Addr:%12li \t Size:%12lu\n\n", 
 		    tid,
 		    req.sTime,
 		    req.rwbs,
 		    mAddr,
 		    mSize);	
-		   */
+#endif
+		   
 	}
 
 	if( get_queue_status() == 1 ){

@@ -5,7 +5,7 @@
 #include <string.h> //strtok()
 #include <sys/time.h>	//gettimeofday
 #include "trace_parser.h"
-#include "common.h"
+#include "common.h"  
 
 void parse_one_line(char *line, readLine *string)
 {

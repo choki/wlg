@@ -7,12 +7,17 @@ FILE_PATH /dev/sda1
 # 	Workload will be generated according to the below user setting.
 # 1 -> Replay mode
 # 	Workload will be replayed accroding to the "TRACE_INPUT_FILE_NAME" file.
+# 	This mode only runs with single thread mode.
 # 	Most of user settings will be ignored.
+# 2 -> Verify mode
+# 	Read/Write contents will be verified.
+# 	Read the contents as soon as write operation is done.
+# 	This mode only runs with single thread mode.
 TEST_MODE 0
 
 # Number of thread that will produce I/O request in parallel manner
 # Only valid in "generating" mode because of timing accuracy problem in "replay" mode.
-	THREAD_NUM 3
+	THREAD_NUM 5
 
 # Number of queue depth (Asynchronous I/O - Using libaio)
 # Only valid in "replay" mode
@@ -24,7 +29,7 @@ TEST_LENGTH 1
 
 # if TEST_LENGTH_TYPE is time, 
 # 	this value will be ignored
-	TOTAL_TEST_REQUESTS 2000
+	TOTAL_TEST_REQUESTS 5
 
 # Unit of value is 'ms' & 
 # 	if TEST_LENGTH_TYPE is number of requests, 
@@ -45,12 +50,12 @@ MAX_SIZE 409600
 MIN_SIZE 409600
 
 # Each operation type is selected by each weigh
-READ_W 100
-WRITE_W 0
+READ_W 50
+WRITE_W 50
 
 # Sequntiality is managed by weigh
-SEQUENTIAL_W 0
-NONSEQUENTIAL_W 100
+SEQUENTIAL_W 100
+NONSEQUENTIAL_W 0
 
 # After requests as many as burstiness number are issued, 
 # 	request issuing is posed for pose time
@@ -70,4 +75,4 @@ ALIGNMENT 1
 # If "1" the issuing requests are the same in every test round.
 # 	1 -> Deterministic
 # 	0 -> Non-deterministic
-RANDOM_DETERMINISTIC 1
+RANDOM_DETERMINISTIC 0

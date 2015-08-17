@@ -26,6 +26,7 @@ static wg_env *setting;
 
 unsigned long max_written_size = 0;
 unsigned int shared_cnt = 0;
+long prior_end_addr = -1;
 pthread_mutex_t thr_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* Extern Functions */
@@ -136,6 +137,10 @@ void main(void)
 	}else if(setting->test_mode == WG_REPLAY_MODE){
 	    tid = pthread_create(&tinfo[i].thr, NULL, &workload_replayer, (void *)setting);
 	    //Repalyer only works in a single thread.
+	    break;
+	}else if(setting->test_mode == WG_VERIFY_MODE){
+	    tid = pthread_create(&tinfo[i].thr, NULL, &workload_generator, (void *)setting);
+	    //Verify mode only works in a single thread.
 	    break;
 	}
 	if(tid < 0){
@@ -293,8 +298,23 @@ static void f_file_path(char *in)
     PRINT("file path : \t\t\t%s\n", (char *)setting->file_path);
 }
 static void f_test_mode(unsigned long in){
+    char mode[MAX_STR_LEN] = {0};
     setting->test_mode = (unsigned int)in;
-    PRINT("test mode : \t\t\t%s\n", (unsigned int)in?"REPLAY mode":"GENERATING mode");
+    switch(in){
+	case WG_GENERATING_MODE:
+	    strcpy(mode, "GENERATING mode");
+	    break;
+	case WG_REPLAY_MODE:
+	    strcpy(mode, "REPLAY mode");
+	    break;
+	case WG_VERIFY_MODE:
+	    strcpy(mode, "VERIFY mode");
+	    break;
+	default:
+	    strcpy(mode, "NOT SUPPORTING mode");
+	    break;
+    }
+    PRINT("test mode : \t\t\t%s\n", mode);
 }
 static void f_thread_num(unsigned long in){
     setting->thread_num = (unsigned int)in;

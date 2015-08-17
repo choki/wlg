@@ -1,16 +1,18 @@
 #ifndef __GIO_H__
 #define __GIO_H__
-
-
+  
+  
 /* extern variables */
 extern unsigned long max_written_size;
 extern unsigned int shared_cnt;
+extern long prior_end_addr;
 extern pthread_mutex_t thr_mutex;
-
+    
 /* Types */
 typedef enum{
     WG_GENERATING_MODE,
     WG_REPLAY_MODE,
+    WG_VERIFY_MODE,
     NUM_TEST_MODE_TYPE
 }TEST_MODE_TYPE;
 
