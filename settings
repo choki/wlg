@@ -24,7 +24,7 @@ TEST_LENGTH 1
 
 # if TEST_LENGTH_TYPE is time, 
 # 	this value will be ignored
-	TOTAL_TEST_REQUESTS 20
+	TOTAL_TEST_REQUESTS 2000
 
 # Unit of value is 'ms' & 
 # 	if TEST_LENGTH_TYPE is number of requests, 
@@ -41,12 +41,12 @@ MIN_ADDRESS 0
 
 # Size of request
 # To make fixed size request test, make these values the same.
-MAX_SIZE 4096
-MIN_SIZE 4096
+MAX_SIZE 409600
+MIN_SIZE 409600
 
 # Each operation type is selected by each weigh
-READ_W 0
-WRITE_W 100
+READ_W 100
+WRITE_W 0
 
 # Sequntiality is managed by weigh
 SEQUENTIAL_W 0
@@ -54,9 +54,9 @@ NONSEQUENTIAL_W 100
 
 # After requests as many as burstiness number are issued, 
 # 	request issuing is posed for pose time
-BURSTINESS_NUMBER 1000 
+BURSTINESS_NUMBER 100000
 # Unit of pose time is 'ms'
-POSE_TIME 0
+POSE_TIME 10
 
 # DIRECT_IO requires aligned start address & muliple of 512 size
 # 	0 -> OFF, 

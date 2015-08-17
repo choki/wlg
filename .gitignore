@@ -50,7 +50,7 @@ trace_p
 trace.blktrace.*
 trace.blkparse
 parser
-run
+gio
 
 # Windows visual studio files #
 .vs/

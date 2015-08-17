@@ -17,6 +17,7 @@
 #include "gio.h"
 #include "common.h"
 
+#define ONLY_FOR_TEST
 
 /* Static Functions */
 static int select_op(unsigned long cur_file_size);
@@ -92,25 +93,29 @@ void *workload_generator(void *arg)
     get_current_time(&start_time);
 
     PRINT("\n");
+#ifdef ONLY_FOR_TEST
+    size = 512;
+#endif
     while (1) {
 	op = select_op(max_written_size);
 	seq_rnd = select_start_addr(&start_addr, prior_end_addr, op, max_written_size);
 	
 #ifdef ONLY_FOR_TEST
-	//TODO for test
-	/*if(test_count%4 == 1){
+	if(test_count%50 == 0){
 	    size *= 2;
 	}
-	test_count++;*/
+	test_count++;
 #else
 	size = select_size(start_addr, op , max_written_size);
 #endif
 	if(size == 0){
 	    continue;
 	}
+#if !defined(ONLY_FOR_TEST)
 	if( (desc->max_size == desc->min_size) && (size != desc->min_size) ){
 	    continue;
 	}
+#endif
 	fill_data(desc, buf, size);
 
 	PRINT("\nGENERATOR tid:%u %s %s Addr:%12lu \t Size:%12lu\n", 
