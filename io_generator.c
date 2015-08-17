@@ -23,6 +23,8 @@ static int select_op(void);
 static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, long prior_end_addr, int op);
 static unsigned long select_size(unsigned long start_addr, int op);
 static unsigned int get_rand_range(unsigned int min, unsigned int max);
+static void first_run_checker(int *first_run, int tid);
+static void make_initial_file(int fd);
 
 /* static varialbes */
 static wg_env *desc;
@@ -31,7 +33,6 @@ static wg_env *desc;
 void *workload_generator(void *arg)
 {
     int fd;
-    int fd_check;
     int op;
     SEQUENTIALITY_TYPE seq_rnd;
     size_t ret;
@@ -40,16 +41,12 @@ void *workload_generator(void *arg)
     unsigned int burst_cnt = 0;
     unsigned long req_cnt = 0;
     char *buf;
-    char *init_buf;
     struct timeval current_time, 
 	posed_time, 
 	start_time;
     unsigned int tid = 0;
 
-    int i = 0;
-    int init_chunk_size;
     int first_run = 0;
-    struct stat stat_buf;
 #ifdef ONLY_FOR_TEST
     int test_count=1;
 #endif
@@ -74,57 +71,32 @@ void *workload_generator(void *arg)
 	PRINT("Error on opening the init_file of workload generator, file:%s, line:%d, fd=%d\n", __func__, __LINE__, fd);
 	exit(1);
     }
+
+    //Check if we need to make initial file.
+    pthread_mutex_lock(&thr_mutex);
+    first_run_checker(&first_run, tid);
+    if(first_run == 1){
+    	//Initial file sequantial write over the "MIN_ADDRESS~MAX_ADDRESS" range
+	make_initial_file(fd);
+    }
+    pthread_mutex_unlock(&thr_mutex);
+    
     mem_allocation(desc, &buf, (desc->max_size)*(desc->interface_unit));
     if (NULL == buf) {
 	PRINT("Error on memory allocation, file:%s, line:%d\n", __func__, __LINE__);
 	exit(1);
     }
-
-    //Check if we need to make initial file.
-    pthread_mutex_lock(&thr_mutex);
-    if( stat(FIRST_RUN_CHECK_FILE_NAME, &stat_buf) != 0){
-	PRINT("%s file exist\n",FIRST_RUN_CHECK_FILE_NAME);
-	PRINT("This is first RUN, tid=%d\n", tid);
-	if( (fd_check = open(FIRST_RUN_CHECK_FILE_NAME, O_CREAT|O_RDONLY, 0666)) == -1){
-	    PRINT("Error on opening the init_file of workload generator, file:%s, line:%d, fd_check=%d\n", __func__, __LINE__, fd_check);
-	    exit(1);
-	}
-	first_run = 1;
-    }else{
-	first_run = 0;
-    }
-    //Initial file sequantial write over the "MIN_ADDRESS~MAX_ADDRESS" range
-    if(first_run == 1){
-	PRINT("File initialization START, total size = %lu\n", desc->max_addr);
-	init_chunk_size = mem_allocation(desc, &init_buf, sizeof(char)*INITIAL_SEQ_WRITE_CHUNK_SIZE);
-	if (NULL == buf) {
-	    PRINT("Error on memory allocation, file:%s, line:%d\n", __func__, __LINE__);
-	    exit(1);
-	}
-	do{
-	    fill_data(desc, init_buf, init_chunk_size);
-	    ret = pwrite(fd, init_buf, init_chunk_size, i);
-	    if (ret != init_chunk_size) {
-		PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
-		exit(1);
-	    }
-	    i += init_chunk_size;
-	}while(i < desc->max_addr);
-	fsync(fd);
-	free(init_buf);
-	close(fd_check);
-	PRINT("File initialization END\n");
-    }
-    pthread_mutex_unlock(&thr_mutex);
+    usleep(1000);
     get_current_time(&start_time);
-
     PRINT("\n");
 #ifdef ONLY_FOR_TEST
     size = 512;
 #endif
     while (1) {
 	op = select_op();
-	// More likely fail to generate sequential requests as thread number are getting bigger, because of scheduling between the threads. Neverthless keep try to make sequential requests by using lock.
+	// More likely fail to generate sequential requests as thread number are getting bigger,
+	//  because of scheduling between the threads. 
+	// Neverthless keep try to make sequential requests by using lock.
 	pthread_mutex_lock(&thr_mutex);
 	seq_rnd = select_start_addr(&start_addr, prior_end_addr, op);
 #ifdef ONLY_FOR_TEST
@@ -200,6 +172,7 @@ void *workload_generator(void *arg)
 	}
 	req_cnt++;
 	burst_cnt++;
+
 	if (desc->test_length_type == WG_TIME) {
 	    get_current_time(&current_time);
 	    if ( (TIME_VALUE(&current_time) - TIME_VALUE(&start_time)) >= \
@@ -297,4 +270,50 @@ static unsigned int get_rand_range(unsigned int min, unsigned int max)
     return (unsigned int)((rand() % range) + min);
 }
 
-	
+static void first_run_checker(int *first_run, int tid)
+{
+    struct stat stat_buf;
+    int fd_check;
+
+    if( stat(FIRST_RUN_CHECK_FILE_NAME, &stat_buf) != 0){
+	PRINT("%s file is not exist\n",FIRST_RUN_CHECK_FILE_NAME);
+	PRINT("This is first RUN, tid=%d\n", tid);
+	if( (fd_check = open(FIRST_RUN_CHECK_FILE_NAME, O_CREAT|O_RDONLY, 0666)) == -1){
+	    PRINT("Error on opening the init_file of workload generator, file:%s, line:%d, fd_check=%d\n", __func__, __LINE__, fd_check);
+	    exit(1);
+	}
+	*first_run = 1;
+	close(fd_check);
+    }else{
+	*first_run = 0;
+    }
+}
+
+static void make_initial_file(int fd)
+{
+    int init_chunk_size;
+    int i = 0;
+    char *init_buf;
+    size_t ret;
+
+    PRINT("File initialization START, total size = %lu\n", desc->max_addr);
+    init_chunk_size = mem_allocation(desc, &init_buf, sizeof(char)*INITIAL_SEQ_WRITE_CHUNK_SIZE);
+    if (init_buf == NULL) {
+	PRINT("Error on memory allocation, file:%s, line:%d\n", __func__, __LINE__);
+	exit(1);
+    }
+
+    do{
+	fill_data(desc, init_buf, init_chunk_size);
+	ret = pwrite(fd, init_buf, init_chunk_size, i);
+	if (ret != init_chunk_size) {
+	    PRINT("Error on file I/O (error# : %zu), file:%s, line:%d\n", ret, __func__, __LINE__);
+	    exit(1);
+	}
+	i += init_chunk_size;
+    }while(i < desc->max_addr);
+
+    fsync(fd);
+    free(init_buf);
+    PRINT("File initialization END\n");
+}
