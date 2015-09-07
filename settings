@@ -1,7 +1,7 @@
 # WARNING : 
 # 	When a block device is set to file path, 
 # 	application should run with "ROOT" authority.
-FILE_PATH /dev/sda1
+FILE_PATH /dev/sda
 
 # 0 -> Generating mode
 # 	Workload will be generated according to the below user setting.
@@ -14,27 +14,30 @@ FILE_PATH /dev/sda1
 # 	Read the contents as soon as write operation is done.
 # 	This mode only runs with single thread mode.
 TEST_MODE 0
-
 # Number of thread that will produce I/O request in parallel manner
 # Only valid in "generating" mode because of timing accuracy problem in "replay" mode.
 	THREAD_NUM 5
-
 # Number of queue depth (Asynchronous I/O - Using libaio)
 # Only valid in "replay" mode
-	MAX_QUEUE_DEPTH 32
+	MAX_QUEUE_DEPTH 3
 
 # 0 -> Time
 # 1 -> Number of Requests
 TEST_LENGTH 1
-
 # if TEST_LENGTH_TYPE is time, 
 # 	this value will be ignored
-	TOTAL_TEST_REQUESTS 5
-
+# 	It is recommanded to set this value with multiple of "THREAD_NUM"
+	TOTAL_TEST_REQUESTS 2000
 # Unit of value is 'ms' & 
 # 	if TEST_LENGTH_TYPE is number of requests, 
 # this value will be ignored
 	TOTAL_TEST_TIME 100000
+
+# Make random number deterministically.
+# If "1" the issuing requests are the same in every test round.
+# 	1 -> Deterministic
+# 	0 -> Non-deterministic
+RANDOM_DETERMINISTIC 1
 
 # 0 -> Character Device (Unit : byte) 
 # 1 -> Block Device (Unit : Sector)
@@ -47,32 +50,34 @@ MIN_ADDRESS 0
 # Size of request
 # To make fixed size request test, make these values the same.
 MAX_SIZE 409600
-MIN_SIZE 409600
+MIN_SIZE 4096
 
 # Each operation type is selected by each weigh
-READ_W 50
-WRITE_W 50
+READ_W 100
+WRITE_W 0
 
+# Sequentiality mode
+# 0 -> Control by percentage
+# 1 -> Control by count
+SEQUENTIAL_MODE 1
 # Sequntiality is managed by weigh
-SEQUENTIAL_W 100
-NONSEQUENTIAL_W 0
+	SEQUENTIAL_W 0
+	NONSEQUENTIAL_W 100
+# Sequentiality is managed by count of requests that have consecutive LBA.
+# 1 -> has the same meaning with random workload
+ 	SEQUENTIAL_C 5
 
 # After requests as many as burstiness number are issued, 
 # 	request issuing is posed for pose time
 BURSTINESS_NUMBER 100000
 # Unit of pose time is 'ms'
-POSE_TIME 10
+POSE_TIME 5
 
 # DIRECT_IO requires aligned start address & muliple of 512 size
-# 	0 -> OFF, 
+# 	0 -> OFF
 # 	1 -> ON
 ALIGNMENT 1 
 
 # Unit is byte
 	ALIGNMENT_UNIT 512
 
-# Make random number deterministically.
-# If "1" the issuing requests are the same in every test round.
-# 	1 -> Deterministic
-# 	0 -> Non-deterministic
-RANDOM_DETERMINISTIC 0

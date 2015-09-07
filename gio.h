@@ -3,9 +3,9 @@
   
   
 /* extern variables */
-extern unsigned long max_written_size;
 extern unsigned int shared_cnt;
 extern long prior_end_addr;
+extern unsigned int cur_seq_cnt;
 extern pthread_mutex_t thr_mutex;
     
 /* Types */
@@ -39,8 +39,10 @@ typedef enum {
     MIN_ADDR,		    
     MAX_SIZE,		    
     MIN_SIZE,		    
+    SEQUENTIAL_MODE,	    
     SEQUENTIAL_W,	    
     NONSEQUENTIAL_W,	    
+    SEQUENTIAL_C,	    
     READ_W,		    
     WRITE_W,		    
     BURSTINESS_NUMBER,	    
@@ -64,6 +66,12 @@ typedef enum {
 }OPERATION_TYPE;
 
 typedef enum {
+    WG_PERCENTAGE,			    
+    WG_COUNT,			   
+    NUM_TEST_CONTROL_TYPE	
+}TEST_CONTROL_TYPE;
+
+typedef enum {
     WG_SEQ,			    
     WG_RND,			   
     NUM_SEQUENTIALITY_TYPE	
@@ -76,27 +84,24 @@ typedef struct _wg_env {
     unsigned int thread_num;
     unsigned int read_w;
     unsigned int write_w;
+    unsigned int sequential_mode;
     unsigned int sequential_w;
     unsigned int nonsequential_w;
+    unsigned int sequential_c;
     unsigned long max_addr;
     unsigned long min_addr;
     unsigned long max_size;
     unsigned long min_size;
-
     unsigned long total_test_req;
-
     unsigned int burstiness_number;
-    unsigned int pose_time; //ms
-
+    unsigned int pose_time;
     unsigned int alignment;
     unsigned int alignment_unit;
-
     unsigned int test_interface_type;
     unsigned int interface_unit;
     unsigned int test_length_type;
     unsigned int total_test_time;
     unsigned int rand_deterministic;
-
     unsigned int max_queue_depth;
 } wg_env;
 

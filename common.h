@@ -46,4 +46,5 @@ int mem_allocation(wg_env *desc, char **buf, int reqSize);
 void get_current_time(struct timeval *now);
 void usec_sleep(long long usec);
 long long usec_elapsed(struct timeval start);
+unsigned long long utime_calculator(struct timeval *s, struct timeval *e);
 #endif //__COMMON_H__

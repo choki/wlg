@@ -65,6 +65,7 @@ void fill_data(wg_env *desc, char *buf, unsigned int size)
 	PRINT("Error on workload data setup, file:%s, line:%d\n", __func__, __LINE__);
     }
 }
+
 int mem_allocation(wg_env *desc, char **buf, int reqSize)
 {
 	int alignedReqSize;
@@ -88,6 +89,7 @@ int mem_allocation(wg_env *desc, char **buf, int reqSize)
 	else
 	    return reqSize;
 }
+
 void get_current_time(struct timeval *now)
 {
     struct timespec ts;
@@ -99,6 +101,7 @@ void get_current_time(struct timeval *now)
     	gettimeofday(now, NULL);
     }
 }
+
 void usec_sleep(long long usec)
 {
     struct timeval now;
@@ -107,9 +110,29 @@ void usec_sleep(long long usec)
 	NOP;
     }
 }
+
 long long usec_elapsed(struct timeval start)
 {
     struct timeval end;
     get_current_time(&end);
     return TIME_VALUE(&end) - TIME_VALUE(&start);
+}
+
+unsigned long long utime_calculator(struct timeval *s, struct timeval *e)
+{
+ 	long sec, usec;
+    	
+	//PRINT("start sec:%ld, usec:%ld\n", s->tv_sec, s->tv_usec);
+ 	//PRINT("end sec:%ld, usec:%ld\n", e->tv_sec, e->tv_usec);
+	sec = e->tv_sec - s->tv_sec;
+	usec = e->tv_usec - s->tv_usec;
+	if(sec < 0){
+	    PRINT("%s : unbelievable thing happended, time warp\n", __func__);
+	    exit(1);
+	}
+	if(usec < 0){
+	    sec--;
+	    usec += 1000000;
+	}
+	return sec*1000000ULL + usec;
 }

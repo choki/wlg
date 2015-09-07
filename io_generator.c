@@ -43,16 +43,14 @@ void *workload_generator(void *arg)
     char *buf;
     struct timeval current_time, 
 	posed_time, 
-	start_time;
+	start_time,
+    	end_time;
+    unsigned long long timediff = 0;
+    unsigned long total_byte = 0;
     unsigned int tid = 0;
-
     int first_run = 0;
-#ifdef ONLY_FOR_TEST
-    int test_count=1;
-#endif
     char comp_1[VERIFY_STR_LEN] = {0};
     char comp_2[VERIFY_STR_LEN] = {0};
-
     //io tracer related
     unsigned long long trace_time;
     char trace_line[MAX_STR_LEN] = {0};
@@ -87,11 +85,12 @@ void *workload_generator(void *arg)
 	exit(1);
     }
     usleep(1000);
-    get_current_time(&start_time);
-    PRINT("\n");
 #ifdef ONLY_FOR_TEST
     size = 512;
 #endif
+    get_current_time(&start_time);
+    PRINT("\n");
+
     while (1) {
 	op = select_op();
 	// More likely fail to generate sequential requests as thread number are getting bigger,
@@ -100,10 +99,9 @@ void *workload_generator(void *arg)
 	pthread_mutex_lock(&thr_mutex);
 	seq_rnd = select_start_addr(&start_addr, prior_end_addr, op);
 #ifdef ONLY_FOR_TEST
-	if(test_count%50 == 0){
+	if(req_cnt%200 == 0){
 	    size *= 2;
 	}
-	test_count++;
 #else
 	size = select_size(start_addr, op);
 #endif
@@ -127,6 +125,7 @@ void *workload_generator(void *arg)
 		(op==WG_READ?"READ ":"WRITE"), 
 		start_addr, 
 		size);
+	total_byte += size;
 
 	if(desc->test_mode == WG_GENERATING_MODE){
 	    pthread_mutex_lock(&thr_mutex);
@@ -180,7 +179,7 @@ void *workload_generator(void *arg)
 		//Go out!!
 		break;
 	} else if (desc->test_length_type == WG_NUMBER) {
-	    if (req_cnt >= (unsigned int)desc->total_test_req) 
+	    if (req_cnt >= (unsigned int)desc->total_test_req/desc->thread_num) 
 		//Go out!!
 		break;
 	} else {
@@ -199,7 +198,11 @@ void *workload_generator(void *arg)
 	    }
 	}
     }
-    pthread_mutex_destroy(&thr_mutex);
+    get_current_time(&end_time);
+    timediff = utime_calculator(&start_time, &end_time);
+    PRINT("\n");
+    PRINT("* [%u] THROUGHPUT:%llukb/sec | Run Time:%llu.%llu | Total Bytes:%lu **\n", 
+	    tid, total_byte/timediff, timediff/1000000ULL, timediff%1000000ULL, total_byte); 
     close(fd);
     free(buf);
     PRINT("END OF GENERATOR\n");
@@ -222,20 +225,30 @@ static SEQUENTIALITY_TYPE select_start_addr(unsigned long *start_addr, long prio
     unsigned long selector;
     SEQUENTIALITY_TYPE seq_rnd;
 
-    selector = get_rand_range(0, desc->sequential_w + desc->nonsequential_w - 1);
+    if(desc->sequential_mode == WG_COUNT){
+	if( (desc->sequential_c > cur_seq_cnt) && (prior_end_addr != -1) ){
+	    seq_rnd = WG_SEQ;
+	    cur_seq_cnt++;
+	}else{
+	    seq_rnd = WG_RND;
+	    cur_seq_cnt = 1;
+	}
+    }else{
+	selector = get_rand_range(0, desc->sequential_w + desc->nonsequential_w - 1);
+	if( (selector < desc->sequential_w) && (prior_end_addr != -1) ){
+	    seq_rnd = WG_SEQ;
+	}else{
+	    seq_rnd = WG_RND;
+	}
+    }
 
-    //Sequential case
-    if( (selector < desc->sequential_w) && (prior_end_addr != -1) ){
+    if(seq_rnd == WG_SEQ){
 	*start_addr = prior_end_addr;
-	if(selector >= desc->max_addr){
+	if(*start_addr >= desc->max_addr){
 	    *start_addr = desc->min_addr;
 	}
-	seq_rnd = WG_SEQ;
-    }
-    //Random case
-    else{
+    }else{
 	*start_addr = get_rand_range(desc->min_addr, desc->max_addr - 1);
-	seq_rnd = WG_RND;
     }
     if( desc->alignment ){
 	*start_addr = GET_ALIGNED_VALUE(*start_addr);

@@ -24,9 +24,9 @@
 /* Local Variables */
 static wg_env *setting;
 
-unsigned long max_written_size = 0;
-unsigned int shared_cnt = 0;
-long prior_end_addr = -1;
+unsigned int shared_cnt = 0;	//Use to determine thread id.
+unsigned int cur_seq_cnt = 1;	//This is to count sequential request number.
+long prior_end_addr = -1;	//Save prior request's LBA to make sequential request.
 pthread_mutex_t thr_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* Extern Functions */
@@ -47,8 +47,10 @@ static void f_max_addr(unsigned long in);
 static void f_min_addr(unsigned long in);
 static void f_max_size(unsigned long in);
 static void f_min_size(unsigned long in);
+static void f_sequential_mode(unsigned long in);
 static void f_sequential_w(unsigned long in);
 static void f_nonsequential_w(unsigned long in);
+static void f_sequential_c(unsigned long in);
 static void f_read_w(unsigned long in);
 static void f_write_w(unsigned long in);
 static void f_burstiness_number(unsigned long in);
@@ -70,8 +72,10 @@ static char wg_param_num[NUM_WG_PARAMETER_NUM][255] = {
     "MIN_ADDRESS",			
     "MAX_SIZE",				
     "MIN_SIZE",				
+    "SEQUENTIAL_MODE",			
     "SEQUENTIAL_W",			
     "NONSEQUENTIAL_W",			
+    "SEQUENTIAL_C",
     "READ_W",				
     "WRITE_W",				
     "BURSTINESS_NUMBER",		
@@ -97,8 +101,10 @@ static void (*wg_param_num_cmd[NUM_WG_PARAMETER_NUM])(unsigned long) = {
     f_min_addr,		
     f_max_size,			
     f_min_size,			
+    f_sequential_mode,		
     f_sequential_w,		
     f_nonsequential_w,		
+    f_sequential_c,		
     f_read_w,			
     f_write_w,				
     f_burstiness_number,	
@@ -166,6 +172,7 @@ void main(void)
 	tracer_save_file();
     }
     terminate_queue();
+    pthread_mutex_destroy(&thr_mutex);
     if(setting->file_path)
 	free(setting->file_path);
     if(setting)
@@ -364,6 +371,11 @@ static void f_min_size(unsigned long in)
     setting->min_size = in;
     PRINT("min_size : \t\t\t%lu Bytes\n", in);
 }
+static void f_sequential_mode(unsigned long in)
+{
+    setting->sequential_mode = (unsigned int)in;
+    PRINT("sequential_mode : \t\t%s\n", (unsigned int)in?"Count":"Percentage");
+}
 static void f_sequential_w(unsigned long in)
 {
     setting->sequential_w = (unsigned int)in;
@@ -373,6 +385,11 @@ static void f_nonsequential_w(unsigned long in)
 {
     setting->nonsequential_w = (unsigned int)in;
     PRINT("nonsequential_w : \t\t%u %%\n", (unsigned int)in);
+}
+static void f_sequential_c(unsigned long in)
+{
+    setting->sequential_c = (unsigned int)in;
+    PRINT("sequential_c : \t\t\t%u\n", (unsigned int)in);
 }
 static void f_read_w(unsigned long in)
 {
