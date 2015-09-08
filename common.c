@@ -94,12 +94,14 @@ void get_current_time(struct timeval *now)
 {
     struct timespec ts;
 
+    /* Temporary commented due to compile error in old kernel version
     if(clock_gettime(1, &ts) < 0){
 	now->tv_sec = ts.tv_sec;
 	now->tv_usec = ts.tv_nsec/1000;
     }else{
+    */
     	gettimeofday(now, NULL);
-    }
+    //}
 }
 
 void usec_sleep(long long usec)

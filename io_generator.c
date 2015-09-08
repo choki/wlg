@@ -106,10 +106,12 @@ void *workload_generator(void *arg)
 	size = select_size(start_addr, op);
 #endif
 	if(size == 0){
+	    pthread_mutex_unlock(&thr_mutex);
 	    continue;
 	}
 #if !defined(ONLY_FOR_TEST)
 	if( (desc->max_size == desc->min_size) && (size != desc->min_size) ){
+	    pthread_mutex_unlock(&thr_mutex);
 	    continue;
 	}
 #endif
@@ -201,8 +203,8 @@ void *workload_generator(void *arg)
     get_current_time(&end_time);
     timediff = utime_calculator(&start_time, &end_time);
     PRINT("\n");
-    PRINT("* [%u] THROUGHPUT:%llukb/sec | Run Time:%llu.%llu | Total Bytes:%lu **\n", 
-	    tid, total_byte/timediff, timediff/1000000ULL, timediff%1000000ULL, total_byte); 
+    PRINT("* [%u] THROUGHPUT:%lluKB/sec | Run Time:%llu.%llu | Total Bytes:%lu **\n", 
+	    tid, total_byte/(timediff/1000ULL), timediff/1000000ULL, timediff%1000000ULL, total_byte); 
     close(fd);
     free(buf);
     PRINT("END OF GENERATOR\n");
@@ -326,7 +328,7 @@ static void make_initial_file(int fd)
 	i += init_chunk_size;
     }while(i < desc->max_addr);
 
-    fsync(fd);
     free(init_buf);
+    fsync(fd);
     PRINT("File initialization END\n");
 }

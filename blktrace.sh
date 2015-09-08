@@ -8,7 +8,7 @@ function auto_run_blkparse(){
 
 function tracing(){
 	echo "blktracing...."
-	sudo blktrace -d /dev/sda -a complete -a issue -o trace
+	sudo blktrace -d /dev/pageftl -a complete -a issue -o trace
 }
 
 function parsing(){
